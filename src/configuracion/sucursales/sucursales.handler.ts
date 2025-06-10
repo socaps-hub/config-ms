@@ -1,0 +1,28 @@
+import { Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { SucursalesService } from './sucursales.service';
+import { Usuario } from '../../common/entities/usuario.entity';
+
+@Controller()
+export class SucursalesHandler {
+
+  constructor(
+    private readonly sucursalesService: SucursalesService
+  ) {}
+
+  @MessagePattern('config.sucursales.getAll')
+  handleFindAll(
+    @Payload('user') user: Usuario
+  ) {
+    return this.sucursalesService.findAll(user);
+  }
+
+  @MessagePattern('config.sucursales.getById')
+  handleFindOne(
+    @Payload() data: { id: string, user: Usuario }
+  ) {
+    return this.sucursalesService.findOne(data.id, data.user);
+  }
+
+  // Puedes agregar `create`, `update` y `remove` cuando estén disponibles
+}

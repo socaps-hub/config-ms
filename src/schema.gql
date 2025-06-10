@@ -1,0 +1,61 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Sucursal {
+  R11Id: ID!
+  R11NumSuc: String!
+  R11Nom: String!
+}
+
+type Cooperativa {
+  R17Id: ID!
+  R17Nom: String!
+  R17Activ: Boolean!
+  R17Logo: String!
+  R17Creada_en: DateTime!
+  sucursales: [Sucursal!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Categoria {
+  R14Id: String!
+  R14Nom: String!
+  R14Activ: Boolean!
+}
+
+type Query {
+  cooperativas: [Cooperativa!]!
+  cooperativa(id: ID!): Cooperativa!
+  sucursales: [Sucursal!]!
+  sucursal(id: ID!): Sucursal!
+  categorias: [Categoria!]!
+  categoria(id: ID!): Categoria!
+}
+
+type Mutation {
+  createCooperativa(createCooperativaInput: CreateCooperativaInput!): Cooperativa!
+  updateCooperativa(updateCooperativaInput: UpdateCooperativaInput!): Cooperativa!
+  activateCooperativa(id: String!): Cooperativa!
+  desactivateCooperativa(id: String!): Cooperativa!
+  createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
+}
+
+input CreateCooperativaInput {
+  R17Nom: String!
+  R17Logo: String!
+}
+
+input UpdateCooperativaInput {
+  R17Nom: String
+  R17Logo: String
+  id: ID!
+}
+
+input CreateCategoriaInput {
+  R14Nom: String!
+}
