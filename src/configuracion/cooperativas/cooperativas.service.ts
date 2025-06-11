@@ -47,6 +47,12 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
 
   async findAll(): Promise<Cooperativa[]> {
     return await this.r17Cooperativas.findMany({
+      where: {
+        R17Activ: true
+      },
+      orderBy: {
+        R17Creada_en: 'desc'
+      },
       include: {
         sucursales: true
       }
