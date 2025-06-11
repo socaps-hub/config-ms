@@ -26,6 +26,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
     
 
     if ( cooperativa ) {
+
+      if ( !cooperativa.R17Activ ) {
+        throw new RpcException({
+          message: `Cooperativa (${ cooperativa.R17Nom }) esta desactivada`,
+          status: HttpStatus.BAD_REQUEST
+        })
+      }
+
       throw new RpcException({
         message: `La cooperativa ${ R17Nom } ya existe en la base de datos`,
         status: HttpStatus.BAD_REQUEST
@@ -111,11 +119,21 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async activate( id: string ): Promise<Cooperativa> {
-    const cooperativa = await this.findOne( id )
+  async activate( name: string ): Promise<Cooperativa> {
+    const cooperativa = await this.r17Cooperativas.findFirst({
+      where: { R17Nom: name }
+    })
+
+    if ( !cooperativa ) {
+      throw new RpcException({
+        message: `Cooperativa ${ name } no existe`,
+        status: HttpStatus.BAD_REQUEST
+      })
+      // throw new BadRequestException(`Cooperativa con el id ${ id } no existe`)
+    }
     
     return await this.r17Cooperativas.update({
-      where: { R17Id: id },
+      where: { R17Id: cooperativa.R17Id },
       data: {
         R17Id: cooperativa.R17Id,
         R17Nom: cooperativa.R17Nom,

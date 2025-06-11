@@ -40,9 +40,9 @@ export class CooperativasResolver {
 
   @Mutation(() => Cooperativa)
   activateCooperativa(
-    @Args('id', { type: () => String }, ParseUUIDPipe) id: string
+    @Args('name', { type: () => String }) name: string
   ) {
-    return this.cooperativasService.activate(id);
+    return this.cooperativasService.activate(name);
   }
 
   @Mutation(() => Cooperativa)

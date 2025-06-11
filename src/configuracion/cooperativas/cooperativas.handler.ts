@@ -39,9 +39,9 @@ export class CooperativasHandler {
 
     @MessagePattern('config.cooperativas.activate')
     handleActivate(
-        @Payload('id', ParseUUIDPipe) id: string
+        @Payload('name') name: string
     ) {
-        return this.cooperativasService.activate(id)
+        return this.cooperativasService.activate(name)
     }
 
     @MessagePattern('config.cooperativas.desactivate')

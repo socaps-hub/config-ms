@@ -40,7 +40,7 @@ type Query {
 type Mutation {
   createCooperativa(createCooperativaInput: CreateCooperativaInput!): Cooperativa!
   updateCooperativa(updateCooperativaInput: UpdateCooperativaInput!): Cooperativa!
-  activateCooperativa(id: String!): Cooperativa!
+  activateCooperativa(name: String!): Cooperativa!
   desactivateCooperativa(id: String!): Cooperativa!
   createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
 }
