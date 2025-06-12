@@ -15,11 +15,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
     this._logger.log('Database connected')
   }
 
-  async create(createCooperativaInput: CreateCooperativaInput): Promise<Cooperativa> {
+  async create(createCooperativaInput: CreateCooperativaInput) {
     const { R17Nom, R17Logo } = createCooperativaInput
 
     const cooperativa = await this.r17Cooperativas.findFirst({
-      where: { R17Nom: R17Nom }
+      where: { R17Nom: R17Nom.trim() }
     })
 
     console.log(R17Nom, R17Logo);
@@ -48,30 +48,104 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       include: {
         sucursales: {
           select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
         }
       }
     })
   }
 
-  async findAll(): Promise<Cooperativa[]> {
+  async findAll() {
     return await this.r17Cooperativas.findMany({
       where: {
-        R17Activ: true
+        R17Activ: true,
+        R17Nom: { not: 'EnfoqueCooperativo' }
       },
       orderBy: {
         R17Creada_en: 'desc'
       },
       include: {
-        sucursales: true
+        sucursales: {
+          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
+        }
       }
     });
   }
 
-  async findOne(id: string, active: boolean = false ): Promise<Cooperativa> {
+  async findAllWithEjecutivos() {
+    const cooperativas = await this.r17Cooperativas.findMany({
+      where: {
+        R17Activ: true,
+        R17Nom: { not: 'EnfoqueCooperativo' }
+      },
+      orderBy: {
+        R17Creada_en: 'desc'
+      },
+      include: {
+        sucursales: {
+          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
+          where: {
+            R12Activ: true,
+            R12Rol: 'ejecutivo'
+          },
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            R12Creado_en: true,
+            sucursal: true,
+          }
+        }
+      }
+    })
+
+    return cooperativas
+  }
+
+  async findOne(id: string, active: boolean = false ) {
     const cooperativa = await this.r17Cooperativas.findFirst({
       where: { R17Id: id, R17Activ: active },
       include: {
-        sucursales: true
+        sucursales: true,
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
+        }
       }
     })
 
@@ -86,7 +160,7 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
     return cooperativa
   }
 
-  async update(id: string, updateCooperativaInput: UpdateCooperativaInput): Promise<Cooperativa> {
+  async update(id: string, updateCooperativaInput: UpdateCooperativaInput) {
 
     const { id: _, ...data } = updateCooperativaInput
 
@@ -114,12 +188,23 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       include: {
         sucursales: {
           select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
         }
       }
     });
   }
 
-  async activate( name: string ): Promise<Cooperativa> {
+  async activate( name: string ) {
     const cooperativa = await this.r17Cooperativas.findFirst({
       where: { R17Nom: name }
     })
@@ -143,12 +228,23 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       include: {
         sucursales: {
           select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
         }
       }
     });
   }
 
-  async desactivate( id: string ): Promise<Cooperativa> {
+  async desactivate( id: string ) {
     const cooperativa = await this.findOne( id, true )
     
     return await this.r17Cooperativas.update({
@@ -162,6 +258,17 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       include: {
         sucursales: {
           select: { R11Id: true, R11NumSuc: true, R11Nom: true }
+        },
+        usuarios: {
+          select: { 
+            R12Id: true,
+            R12Ni: true,
+            R12Nom: true,
+            R12Suc_id: true,
+            R12Rol: true,
+            R12Activ: true,
+            sucursal: true,
+          }
         }
       }
     });

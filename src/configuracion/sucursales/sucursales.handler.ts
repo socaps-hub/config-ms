@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, ParseUUIDPipe } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SucursalesService } from './sucursales.service';
 import { Usuario } from '../../common/entities/usuario.entity';
@@ -23,6 +23,13 @@ export class SucursalesHandler {
     @Payload('user') user: Usuario
   ) {
     return this.sucursalesService.findAll(user);
+  }
+
+  @MessagePattern('config.sucursales.getAllByCoopId')
+  handleFindAllByCoopId(
+    @Payload('id', ParseUUIDPipe) id: string
+  ) {
+    return this.sucursalesService.findAllByCoopId(id);
   }
 
   @MessagePattern('config.sucursales.getById')

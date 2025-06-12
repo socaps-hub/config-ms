@@ -21,7 +21,7 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
     const { R11Nom, R11Coop_id, R11NumSuc } = createSucursaleInput
 
     const [sucursalWithSameName, sucursalWithSameNumSuc] = await Promise.all([
-      this.r11Sucursal.findFirst({ where: { R11Nom, R11Coop_id } }),
+      this.r11Sucursal.findFirst({ where: { R11Nom: R11Nom.trim(), R11Coop_id } }),
       this.r11Sucursal.findFirst({ where: { R11NumSuc, R11Coop_id } }),
     ])
 
@@ -47,18 +47,27 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
   }
 
   async findAll( user: Usuario ): Promise<Sucursal[]> {
-    console.log(user.R12Coop_id);
-    
-    const sucursal = await this.r11Sucursal.findMany({
+    const sucursales = await this.r11Sucursal.findMany({
       where: {
         R11Coop_id: user.R12Coop_id,
       }
     })
-
-    console.log(sucursal);
     
 
-    return sucursal
+    return sucursales
+  }
+
+  async findAllByCoopId( coopId: string ): Promise<Sucursal[]> {
+
+    const sucursales = await this.r11Sucursal.findMany({
+      where: {
+        R11Coop_id: coopId,
+      }
+    })
+    
+
+    return sucursales
+
   }
 
   async findOne(id: string, user: Usuario): Promise<Sucursal> {

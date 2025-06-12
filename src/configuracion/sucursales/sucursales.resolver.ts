@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { SucursalesService } from './sucursales.service';
 import { Sucursal } from './entities/sucursal.entity';
-import { UseGuards } from '@nestjs/common';
+import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { Usuario } from '../../common/entities/usuario.entity';
@@ -25,9 +25,15 @@ export class SucursalesResolver {
   findAll(
     @GetUserGraphQL() user: Usuario
   ) {
-    console.log(user);
-    
     return this.sucursalesService.findAll( user );
+  }
+
+  @Query(() => [Sucursal], { name: 'sucursalesByCoopId' })
+  findAllByCoopId(
+    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string,
+  ) {
+    
+    return this.sucursalesService.findAllByCoopId( id );
   }
 
   @Query(() => Sucursal, { name: 'sucursal' })

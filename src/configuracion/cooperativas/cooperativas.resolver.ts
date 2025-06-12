@@ -1,11 +1,13 @@
 import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { CooperativasService } from './cooperativas.service';
 import { Cooperativa } from './entities/cooperativa.entity';
-import { ParseUUIDPipe } from '@nestjs/common';
+import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { CreateCooperativaInput } from './dto/inputs/create-cooperativa.input';
 import { UpdateCooperativaInput } from './dto/inputs/update-cooperativa.input';
+import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 
 @Resolver(() => Cooperativa)
+@UseGuards(AuthGraphQLGuard)
 export class CooperativasResolver {
 
   constructor(
@@ -22,6 +24,11 @@ export class CooperativasResolver {
   @Query(() => [Cooperativa], { name: 'cooperativas' })
   findAll() {
     return this.cooperativasService.findAll();
+  }
+
+  @Query(() => [Cooperativa], { name: 'cooperativasWithEjecutivosOnly' })
+  findAllWithEjecutivos() {
+    return this.cooperativasService.findAllWithEjecutivos();
   }
 
   @Query(() => Cooperativa, { name: 'cooperativa' })

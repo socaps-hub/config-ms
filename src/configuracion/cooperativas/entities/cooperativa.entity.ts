@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { Usuario } from 'src/common/entities/usuario.entity';
 import { Sucursal } from 'src/configuracion/sucursales/entities/sucursal.entity';
 
 @ObjectType()
@@ -21,5 +22,8 @@ export class Cooperativa {
 
   @Field( () => [Sucursal])
   sucursales: Sucursal[]
+  
+  @Field( () => [Usuario])
+  usuarios: Usuario[]
 
 }

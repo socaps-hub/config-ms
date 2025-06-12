@@ -23,6 +23,11 @@ export class CooperativasHandler {
         return this.cooperativasService.findAll();
     }
 
+    @MessagePattern('config.cooperativas.getAllWithEjecutivos')
+    handleFindAllWithEjecutivos() {
+        return this.cooperativasService.findAllWithEjecutivos();
+    }
+
     @MessagePattern('config.cooperativas.getById')
     handleFindOne(
         @Payload('id', ParseUUIDPipe) id: string

@@ -8,6 +8,22 @@ type Sucursal {
   R11Nom: String!
 }
 
+type Usuario {
+  R12Id: String!
+  R12Ni: String!
+  R12Nom: String!
+  R12Suc_id: String!
+  R12Rol: String!
+  R12Activ: Boolean!
+  R12Creado_en: DateTime!
+  sucursal: Sucursal!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Cooperativa {
   R17Id: ID!
   R17Nom: String!
@@ -15,12 +31,8 @@ type Cooperativa {
   R17Logo: String!
   R17Creada_en: DateTime!
   sucursales: [Sucursal!]!
+  usuarios: [Usuario!]!
 }
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type Categoria {
   R14Id: String!
@@ -30,8 +42,10 @@ type Categoria {
 
 type Query {
   cooperativas: [Cooperativa!]!
+  cooperativasWithEjecutivosOnly: [Cooperativa!]!
   cooperativa(id: ID!): Cooperativa!
   sucursales: [Sucursal!]!
+  sucursalesByCoopId(id: ID!): [Sucursal!]!
   sucursal(id: ID!): Sucursal!
   categorias: [Categoria!]!
   categoria(id: ID!): Categoria!
