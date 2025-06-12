@@ -5,6 +5,7 @@ import { UseGuards } from '@nestjs/common';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { Usuario } from '../../common/entities/usuario.entity';
+import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 
 @Resolver(() => Sucursal)
 @UseGuards( AuthGraphQLGuard )
@@ -12,10 +13,13 @@ export class SucursalesResolver {
 
   constructor(private readonly sucursalesService: SucursalesService) {}
 
-  // @Mutation(() => Sucursale)
-  // createSucursale(@Args('createSucursaleInput') createSucursaleInput: CreateSucursaleInput) {
-  //   return this.sucursalesService.create(createSucursaleInput);
-  // }
+  @Mutation(() => Sucursal)
+  createSucursal(
+    @Args('createSucursalInput') createSucursalInput: CreateSucursaleInput,
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.sucursalesService.create(createSucursalInput, user);
+  }
 
   @Query(() => [Sucursal], { name: 'sucursales' })
   findAll(

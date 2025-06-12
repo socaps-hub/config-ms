@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SucursalesService } from './sucursales.service';
 import { Usuario } from '../../common/entities/usuario.entity';
+import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 
 @Controller()
 export class SucursalesHandler {
@@ -9,6 +10,13 @@ export class SucursalesHandler {
   constructor(
     private readonly sucursalesService: SucursalesService
   ) {}
+
+  @MessagePattern('config.sucursales.create')
+  handleCreate(
+    @Payload() data: {createSucursalInput: CreateSucursaleInput, user: Usuario}
+  ) {
+    return this.sucursalesService.create( data.createSucursalInput, data.user )
+  }
 
   @MessagePattern('config.sucursales.getAll')
   handleFindAll(
