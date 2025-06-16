@@ -2,8 +2,8 @@ import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { Sucursal } from './entities/sucursal.entity';
-import { Usuario } from '../../common/entities/usuario.entity';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Injectable()
 export class SucursalesService extends PrismaClient implements OnModuleInit {

@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { Categoria } from './entities/categoria.entity';
 import { CreateCategoriaInput } from './dto/inputs/create-categoria.input';
 import { RpcException } from '@nestjs/microservices';
-import { Usuario } from '../../common/entities/usuario.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Injectable()
 export class CategoriasService extends PrismaClient implements OnModuleInit {

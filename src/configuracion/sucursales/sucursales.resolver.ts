@@ -4,8 +4,8 @@ import { Sucursal } from './entities/sucursal.entity';
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
-import { Usuario } from '../../common/entities/usuario.entity';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Resolver(() => Sucursal)
 @UseGuards( AuthGraphQLGuard )

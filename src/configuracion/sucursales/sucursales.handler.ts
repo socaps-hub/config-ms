@@ -1,8 +1,8 @@
 import { Controller, ParseUUIDPipe } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SucursalesService } from './sucursales.service';
-import { Usuario } from '../../common/entities/usuario.entity';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Controller()
 export class SucursalesHandler {

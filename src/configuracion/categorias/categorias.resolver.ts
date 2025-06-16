@@ -5,7 +5,7 @@ import { UseGuards } from '@nestjs/common';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { CreateCategoriaInput } from './dto/inputs/create-categoria.input';
-import { Usuario } from 'src/common/entities/usuario.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Resolver(() => Categoria)
 @UseGuards( AuthGraphQLGuard )

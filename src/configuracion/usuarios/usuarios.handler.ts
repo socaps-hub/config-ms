@@ -1,0 +1,65 @@
+import { Controller, ParseUUIDPipe } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
+
+import { UsuariosService } from "../usuarios/usuarios.service";
+import { Usuario } from "../usuarios/entities/usuario.entity";
+import { CreateUsuarioInput } from "../usuarios/dto/inputs/create-usuario.input";
+import { UpdateUsuarioInput } from "./dto/inputs/update-usuario.input";
+import { ValidRoles } from "src/common/enums/valid-roles.enum";
+
+@Controller()
+export class UsuariosHandler {
+
+    constructor(
+        private readonly _usuariosService: UsuariosService
+    ) { }
+
+    @MessagePattern('supervision.usuarios.create')
+    handleCreateUsuario(
+        @Payload() data: { createUsuarioInput: CreateUsuarioInput },
+    ) {
+        return this._usuariosService.create( data.createUsuarioInput );
+    }
+
+    @MessagePattern('supervision.usuarios.getAll')
+    handleGetAll(
+        @Payload() data: { role: ValidRoles, usuario: Usuario }
+    ) {
+        return this._usuariosService.findAll( data.role, data.usuario );
+    }
+
+    @MessagePattern('supervision.usuarios.getByNI')
+    handleGetByNI(
+        @Payload() data : { ni: string, withSucursales: boolean }
+    ) {
+        return this._usuariosService.findByNI(data.ni.toUpperCase(), data.withSucursales);
+    }
+
+    @MessagePattern('supervision.usuarios.getByID')
+    handleGetByID(
+        @Payload('id', ParseUUIDPipe) id: string
+    ) {
+        return this._usuariosService.findByID(id);
+    }
+
+    @MessagePattern('supervision.usuarios.update')
+    handleUpdateUsuario(
+        @Payload() updateUsuarioInput: UpdateUsuarioInput
+    ) {
+        return this._usuariosService.update( updateUsuarioInput.id, updateUsuarioInput );
+    }
+    
+    @MessagePattern('supervision.usuarios.desactivate')
+    handleDesactivateUser(
+        @Payload('id', ParseUUIDPipe) id: string
+    ) {
+        return this._usuariosService.desactivate(id);
+    }
+
+    @MessagePattern('supervision.usuarios.activate')
+    handleActivateUser(
+        @Payload('userNI') userNI: string
+    ) {
+        return this._usuariosService.activate(userNI.toUpperCase());
+    }
+}

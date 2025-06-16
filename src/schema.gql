@@ -2,6 +2,21 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Categoria {
+  R14Id: String!
+  R14Nom: String!
+  R14Activ: Boolean!
+}
+
+type Producto {
+  R13Id: String!
+  R13Nom: String!
+  R13Cat_id: ID!
+  R13Activ: Boolean!
+  R13Coop_id: String!
+  categoria: Categoria!
+}
+
 type Sucursal {
   R11Id: ID!
   R11NumSuc: String!
@@ -32,12 +47,7 @@ type Cooperativa {
   R17Creada_en: DateTime!
   sucursales: [Sucursal!]!
   usuarios: [Usuario!]!
-}
-
-type Categoria {
-  R14Id: String!
-  R14Nom: String!
-  R14Activ: Boolean!
+  productos: [Producto!]!
 }
 
 type Query {
@@ -49,6 +59,16 @@ type Query {
   sucursal(id: ID!): Sucursal!
   categorias: [Categoria!]!
   categoria(id: ID!): Categoria!
+  usuarios(role: ValidRoles): [Usuario!]!
+  usuario(ni: String!): Usuario!
+  productos: [Producto!]!
+}
+
+enum ValidRoles {
+  admin
+  ejecutivo
+  supervisor
+  superUser
 }
 
 type Mutation {
@@ -58,6 +78,14 @@ type Mutation {
   desactivateCooperativa(id: String!): Cooperativa!
   createSucursal(createSucursalInput: CreateSucursaleInput!): Sucursal!
   createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
+  createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
+  updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
+  desactivateUser(id: ID!): Usuario!
+  activateUser(userNI: String!): Usuario!
+  createProducto(createProductoInput: CreateProductoInput!): Producto!
+  updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
+  activateProducto(name: String!): Producto!
+  desactivateProducto(id: ID!): Producto!
 }
 
 input CreateCooperativaInput {
@@ -79,4 +107,34 @@ input CreateSucursaleInput {
 
 input CreateCategoriaInput {
   R14Nom: String!
+}
+
+input CreateUsuarioInput {
+  R12Ni: String!
+  R12Nom: String!
+  R12Password: String!
+  R12Rol: ValidRoles!
+  R12Suc_id: ID!
+  R12Coop_id: ID!
+}
+
+input UpdateUsuarioInput {
+  R12Ni: String
+  R12Nom: String
+  R12Password: String
+  R12Rol: ValidRoles
+  R12Suc_id: ID
+  R12Coop_id: ID
+  id: ID!
+}
+
+input CreateProductoInput {
+  R13Nom: String!
+  R13Cat_id: ID!
+}
+
+input UpdateProductoInput {
+  R13Nom: String
+  R13Cat_id: ID
+  id: ID!
 }

@@ -46,10 +46,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Logo
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -58,6 +62,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -74,10 +94,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Creada_en: 'desc'
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -86,6 +110,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -102,16 +142,13 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Creada_en: 'desc'
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
-          orderBy: {
-            R12Creado_en: 'desc'
-          },
           where: {
             R12Activ: true,
-            R12Rol: 'ejecutivo'
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
           },
           select: { 
             R12Id: true,
@@ -120,8 +157,23 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Suc_id: true,
             R12Rol: true,
             R12Activ: true,
-            R12Creado_en: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -136,6 +188,12 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       include: {
         sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -144,6 +202,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -186,10 +260,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         ...data,
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -198,6 +276,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -226,10 +320,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Logo: cooperativa.R17Logo,
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -238,6 +336,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }
@@ -256,10 +370,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Logo: cooperativa.R17Logo,
       },
       include: {
-        sucursales: {
-          select: { R11Id: true, R11NumSuc: true, R11Nom: true }
-        },
+        sucursales: true,
         usuarios: {
+          where: {
+            R12Activ: true,
+          },
+          orderBy: {
+            R12Creado_en: 'desc'
+          },
           select: { 
             R12Id: true,
             R12Ni: true,
@@ -268,6 +386,22 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R12Rol: true,
             R12Activ: true,
             sucursal: true,
+          }
+        },
+        productos: {
+          where: {
+            R13Activ: true,
+          },
+          orderBy: {
+            R13Creado_en: 'desc'
+          },
+          select: {
+            R13Id: true,
+            R13Nom: true,
+            R13Cat_id: true,
+            R13Activ: true,
+            R13Coop_id: true,
+            categoria: true,
           }
         }
       }

@@ -2,7 +2,7 @@ import { Controller, ParseUUIDPipe } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CategoriasService } from './categorias.service';
 import { CreateCategoriaInput } from './dto/inputs/create-categoria.input';
-import { Usuario } from '../../common/entities/usuario.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @Controller()
 export class CategoriasHandler {
