@@ -14,49 +14,49 @@ export class UsuariosHandler {
         private readonly _usuariosService: UsuariosService
     ) { }
 
-    @MessagePattern('supervision.usuarios.create')
+    @MessagePattern('config.usuarios.create')
     handleCreateUsuario(
         @Payload() data: { createUsuarioInput: CreateUsuarioInput },
     ) {
         return this._usuariosService.create( data.createUsuarioInput );
     }
 
-    @MessagePattern('supervision.usuarios.getAll')
+    @MessagePattern('config.usuarios.getAll')
     handleGetAll(
         @Payload() data: { role: ValidRoles, usuario: Usuario }
     ) {
         return this._usuariosService.findAll( data.role, data.usuario );
     }
 
-    @MessagePattern('supervision.usuarios.getByNI')
+    @MessagePattern('config.usuarios.getByNI')
     handleGetByNI(
         @Payload() data : { ni: string, withSucursales: boolean }
     ) {
         return this._usuariosService.findByNI(data.ni.toUpperCase(), data.withSucursales);
     }
 
-    @MessagePattern('supervision.usuarios.getByID')
+    @MessagePattern('config.usuarios.getByID')
     handleGetByID(
         @Payload('id', ParseUUIDPipe) id: string
     ) {
         return this._usuariosService.findByID(id);
     }
 
-    @MessagePattern('supervision.usuarios.update')
+    @MessagePattern('config.usuarios.update')
     handleUpdateUsuario(
         @Payload() updateUsuarioInput: UpdateUsuarioInput
     ) {
         return this._usuariosService.update( updateUsuarioInput.id, updateUsuarioInput );
     }
     
-    @MessagePattern('supervision.usuarios.desactivate')
+    @MessagePattern('config.usuarios.desactivate')
     handleDesactivateUser(
         @Payload('id', ParseUUIDPipe) id: string
     ) {
         return this._usuariosService.desactivate(id);
     }
 
-    @MessagePattern('supervision.usuarios.activate')
+    @MessagePattern('config.usuarios.activate')
     handleActivateUser(
         @Payload('userNI') userNI: string
     ) {

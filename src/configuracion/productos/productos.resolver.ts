@@ -19,7 +19,7 @@ export class ProductosResolver {
     @Args('createProductoInput') createProductoInput: CreateProductoInput,
     @GetUserGraphQL() user: Usuario
   ) {
-    return this.productosService.create(createProductoInput, user);
+    return this.productosService.create(createProductoInput);
   }
 
   @Query(() => [Producto], { name: 'productos' })
@@ -39,15 +39,15 @@ export class ProductosResolver {
     @Args('updateProductoInput') updateProductoInput: UpdateProductoInput,
     @GetUserGraphQL() user: Usuario
   ) {
-    return this.productosService.update(updateProductoInput.id, updateProductoInput, user);
+    return this.productosService.update(updateProductoInput.id, updateProductoInput );
   }
 
   @Mutation(() => Producto)
   activateProducto(
     @Args('name', { type: () => String }) name: string,
-    @GetUserGraphQL() user: Usuario
+    @Args('coopId', { type: () => String }) coopId: string,
   ) {
-    return this.productosService.activate(name, user);
+    return this.productosService.activate(name, coopId);
   }
 
   @Mutation(() => Producto)

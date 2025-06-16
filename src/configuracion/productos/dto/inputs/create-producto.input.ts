@@ -11,5 +11,9 @@ export class CreateProductoInput {
   @Field( () => ID )
   @IsUUID()
   R13Cat_id: string
+
+  @Field(() => ID)
+  @IsUUID()
+  R13Coop_id: string
   
 }

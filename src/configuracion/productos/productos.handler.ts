@@ -13,35 +13,35 @@ export class ProductosHandler {
         private readonly _service: ProductosService,
     ) {}
 
-    @MessagePattern('supervision.productos.create')
+    @MessagePattern('config.productos.create')
     handleCreate(
-        @Payload() data: { createProductoInput: CreateProductoInput, user: Usuario }
+        @Payload() data: { createProductoInput: CreateProductoInput }
     ) {
-        return this._service.create( data.createProductoInput, data.user )
+        return this._service.create( data.createProductoInput )
     }
 
-    @MessagePattern('supervision.productos.getAll')
+    @MessagePattern('config.productos.getAll')
     handleGetAll(
         @Payload('usuario') usuario: Usuario
     ) {
         return this._service.findAll(usuario);
     }
     
-    @MessagePattern('supervision.productos.update')
+    @MessagePattern('config.productos.update')
     handleUpdate(
-        @Payload() data: { id: string, updateProductoInput: UpdateProductoInput, user: Usuario }
+        @Payload() data: { id: string, updateProductoInput: UpdateProductoInput }
     ) {
-        return this._service.update(data.id, data.updateProductoInput, data.user);
+        return this._service.update(data.id, data.updateProductoInput);
     }
     
-    @MessagePattern('supervision.productos.activate')
+    @MessagePattern('config.productos.activate')
     handleActivate(
-        @Payload() data: { name: string, user: Usuario }
+        @Payload() data: { name: string, coopId: string }
     ) {
-        return this._service.activate(data.name, data.user);
+        return this._service.activate(data.name, data.coopId);
     }
     
-    @MessagePattern('supervision.productos.desactivate')
+    @MessagePattern('config.productos.desactivate')
     handleDesactivate(
         @Payload('id', ParseUUIDPipe) id: string
     ) {

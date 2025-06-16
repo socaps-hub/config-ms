@@ -25,9 +25,9 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     super()
   }
   
-  async create( createProductoInput: CreateProductoInput, user: Usuario): Promise<Producto> {
+  async create( createProductoInput: CreateProductoInput ): Promise<Producto> {
     
-    const { R13Nom, R13Cat_id } = createProductoInput
+    const { R13Nom, R13Cat_id, R13Coop_id } = createProductoInput
 
     // await this._categoriasService.findOne( R13Cat_id )
     const categoria = await firstValueFrom(
@@ -37,7 +37,7 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
     
 
-    const product = await this.findByName( user, R13Nom )
+    const product = await this.findByName( R13Coop_id, R13Nom )
 
     if ( product ) {
       
@@ -61,7 +61,7 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         ...createProductoInput,
         R13Nom: R13Nom.toLowerCase(),
         R13Activ: true,
-        R13Coop_id: user.R12Coop_id,
+        R13Coop_id,
       },
       include: {
         categoria: true
@@ -109,21 +109,28 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     return producto
   }
 
-  async findByName( user: Usuario , name?: string) {
+  async findByName( R13Coop_id: string , name?: string) {
     return await this.r13Producto.findFirst({
       where: {
-        R13Coop_id: user.R12Coop_id,
+        R13Coop_id,
         R13Nom: name?.toLowerCase().trim()
       }
     })
   }
 
-  async update(id: string, updateProductoInput: UpdateProductoInput, user: Usuario) {
+  async update(id: string, updateProductoInput: UpdateProductoInput) {
 
-    const { R13Cat_id, R13Nom } = updateProductoInput
+    const { R13Cat_id, R13Nom, R13Coop_id } = updateProductoInput
+
+    if (!R13Coop_id) {
+      throw new RpcException({
+        message: `Es necesario R13Coop_id para actualizar el producto`,
+        status: HttpStatus.BAD_REQUEST
+      })
+    }
     
     if ( R13Nom ) {
-      const product = await this.findByName( user, R13Nom )
+      const product = await this.findByName( R13Coop_id, R13Nom )
       
       if (product && product.R13Id !== id) {
         throw new RpcException({
@@ -156,9 +163,9 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async activate( name: string, user: Usuario ) {
+  async activate( name: string, coopId: string ) {
     const producto = await this.r13Producto.findFirst({
-      where: { R13Nom: name , R13Coop_id: user.R12Coop_id },
+      where: { R13Nom: name , R13Coop_id: coopId },
       include: {
         categoria: {
           select: {
