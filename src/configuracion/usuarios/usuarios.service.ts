@@ -41,6 +41,9 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     }
 
     users = await this.r12Usuario.findMany({
+      where: {
+        R12Coop_id: user.R12Coop_id,
+      },
       orderBy: {
           R12Creado_en: 'desc'
       },

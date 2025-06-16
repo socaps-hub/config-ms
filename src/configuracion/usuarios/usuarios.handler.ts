@@ -6,6 +6,7 @@ import { Usuario } from "../usuarios/entities/usuario.entity";
 import { CreateUsuarioInput } from "../usuarios/dto/inputs/create-usuario.input";
 import { UpdateUsuarioInput } from "./dto/inputs/update-usuario.input";
 import { ValidRoles } from "src/common/enums/valid-roles.enum";
+import { GetUsuariosArgs } from "./dto/args/get-usuarios.arg";
 
 @Controller()
 export class UsuariosHandler {
@@ -23,9 +24,9 @@ export class UsuariosHandler {
 
     @MessagePattern('config.usuarios.getAll')
     handleGetAll(
-        @Payload() data: { role: ValidRoles, usuario: Usuario }
+        @Payload() data: { role: ValidRoles, user: Usuario }
     ) {
-        return this._usuariosService.findAll( data.role, data.usuario );
+        return this._usuariosService.findAll( data.role, data.user );
     }
 
     @MessagePattern('config.usuarios.getByNI')
