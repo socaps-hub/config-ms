@@ -43,6 +43,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     users = await this.r12Usuario.findMany({
       where: {
         R12Coop_id: user.R12Coop_id,
+        R12Activ: true
       },
       orderBy: {
           R12Creado_en: 'desc'
@@ -139,7 +140,10 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   async update( id: string, updateUsuarioInput: UpdateUsuarioInput ) {
 
-    const { R12Suc_id, R12Ni, R12Nom } = updateUsuarioInput
+    const { R12Suc_id, R12Ni, R12Nom, R12Password } = updateUsuarioInput
+
+    console.log(R12Password);
+    
     
     if ( R12Ni ) {
       
@@ -163,7 +167,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
         R12Suc_id: R12Suc_id ? R12Suc_id : userDB.R12Suc_id,
         R12Ni: R12Ni ? R12Ni : userDB.R12Ni,
         R12Nom: R12Nom ? R12Nom : userDB.R12Nom,
-        R12Password: userDB.R12Password,
+        R12Password: R12Password && R12Password !== 'xxxxxx' ? bcryptAdapter.hash(R12Password) : userDB.R12Password,
         R12Rol: userDB.R12Rol,
         R12Activ: userDB.R12Activ,
         R12Coop_id: userDB.R12Coop_id,
