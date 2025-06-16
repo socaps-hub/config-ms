@@ -51,7 +51,7 @@ type Cooperativa {
 }
 
 type Query {
-  cooperativas: [Cooperativa!]!
+  cooperativas(role: ValidRoles): [Cooperativa!]!
   cooperativasWithEjecutivosOnly: [Cooperativa!]!
   cooperativa(id: ID!): Cooperativa!
   sucursales: [Sucursal!]!

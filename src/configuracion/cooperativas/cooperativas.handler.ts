@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CooperativasService } from './cooperativas.service';
 import { CreateCooperativaInput } from './dto/inputs/create-cooperativa.input';
 import { UpdateCooperativaInput } from './dto/inputs/update-cooperativa.input';
+import { ValidRoles } from 'src/common/enums/valid-roles.enum';
 
 @Controller()
 export class CooperativasHandler {
@@ -19,8 +20,10 @@ export class CooperativasHandler {
     }
 
     @MessagePattern('config.cooperativas.getAll')
-    handleFindAll() {
-        return this.cooperativasService.findAll();
+    handleFindAll(
+        @Payload('role') role: ValidRoles
+    ) {
+        return this.cooperativasService.findAll( role );
     }
 
     @MessagePattern('config.cooperativas.getAllWithEjecutivos')

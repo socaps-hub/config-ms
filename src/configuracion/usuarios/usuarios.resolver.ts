@@ -8,7 +8,6 @@ import { ValidRolesArgs } from './dto/args/roles.arg';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
-import { GetUsuariosArgs } from './dto/args/get-usuarios.arg';
 
 @Resolver(() => Usuario)
 @UseGuards( AuthGraphQLGuard )
