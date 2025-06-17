@@ -2,6 +2,18 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Grupo {
+  R02Id: String!
+  R02Nom: String!
+  R02Creado_en: DateTime!
+  R02Actualizado_en: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Categoria {
   R14Id: String!
   R14Nom: String!
@@ -34,11 +46,6 @@ type Usuario {
   sucursal: Sucursal!
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
 type Cooperativa {
   R17Id: ID!
   R17Nom: String!
@@ -48,6 +55,7 @@ type Cooperativa {
   sucursales: [Sucursal!]!
   usuarios: [Usuario!]!
   productos: [Producto!]!
+  grupos: [Grupo!]!
 }
 
 type Query {

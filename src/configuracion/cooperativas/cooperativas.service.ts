@@ -80,6 +80,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Coop_id: true,
             categoria: true,
           }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
+          }
         }
       }
     })
@@ -130,6 +135,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
               R13Coop_id: true,
               categoria: true,
             }
+          },
+          grupos: {
+            orderBy: {
+              R02Creado_en: 'desc'
+            }
           }
         }
       });
@@ -176,6 +186,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Activ: true,
             R13Coop_id: true,
             categoria: true,
+          }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
           }
         }
       }
@@ -225,6 +240,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Coop_id: true,
             categoria: true,
           }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
+          }
         }
       }
     })
@@ -268,6 +288,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Activ: true,
             R13Coop_id: true,
             categoria: true,
+          }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
           }
         }
       }
@@ -343,6 +368,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Coop_id: true,
             categoria: true,
           }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
+          }
         }
       }
     });
@@ -403,6 +433,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Coop_id: true,
             categoria: true,
           }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
+          }
         }
       }
     });
@@ -452,6 +487,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
             R13Activ: true,
             R13Coop_id: true,
             categoria: true,
+          }
+        },
+        grupos: {
+          orderBy: {
+            R02Creado_en: 'desc'
           }
         }
       }
