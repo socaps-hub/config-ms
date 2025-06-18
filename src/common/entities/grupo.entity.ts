@@ -1,5 +1,5 @@
-import { ObjectType, Field } from '@nestjs/graphql';
-import { Cooperativa } from 'src/configuracion/cooperativas/entities/cooperativa.entity';
+import { ObjectType, Field, GraphQLISODateTime } from '@nestjs/graphql';
+import { Rubro } from './rubro.entity';
 
 @ObjectType()
 export class Grupo {
@@ -13,15 +13,16 @@ export class Grupo {
   // @Field( () => String )
   R02Coop_id: string
   
-  @Field( () => Date )
+  @Field(() => GraphQLISODateTime, { nullable: true })
   R02Creado_en: Date
   
-  @Field( () => Date )
+  @Field(() => GraphQLISODateTime, { nullable: true })
   R02Actualizado_en: Date
   
   // @Field( () => Cooperativa )
   // cooperativa: Cooperativa
 
-  // rubros: 
+  @Field( () => [Rubro], { nullable: true })
+  rubros?: Rubro[]
 
 }

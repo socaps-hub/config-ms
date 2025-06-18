@@ -1,5 +1,6 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, GraphQLISODateTime } from '@nestjs/graphql';
 import { Grupo } from 'src/common/entities/grupo.entity';
+import { Rubro } from 'src/common/entities/rubro.entity';
 import { Producto } from 'src/configuracion/productos/entities/producto.entity';
 import { Sucursal } from 'src/configuracion/sucursales/entities/sucursal.entity';
 import { Usuario } from 'src/configuracion/usuarios/entities/usuario.entity';
@@ -19,19 +20,19 @@ export class Cooperativa {
   @Field( () => String )
   R17Logo: string
   
-  @Field( () => Date )
-  R17Creada_en: Date
+  @Field(() => GraphQLISODateTime, { nullable: true })
+  R17Creada_en?: Date
 
-  @Field( () => [Sucursal])
-  sucursales: Sucursal[]
+  @Field( () => [Sucursal], { nullable: true })
+  sucursales?: Sucursal[]
   
-  @Field( () => [Usuario])
-  usuarios: Usuario[]
+  @Field( () => [Usuario], { nullable: true })
+  usuarios?: Usuario[]
   
-  @Field( () => [Producto])
-  productos: Producto[]
+  @Field( () => [Producto], { nullable: true })
+  productos?: Producto[]
 
-  @Field( () => [Grupo] )
-  grupos: Grupo[]
+  @Field( () => [Grupo] , { nullable: true })
+  grupos?: Grupo[]
 
 }

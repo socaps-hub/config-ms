@@ -92,57 +92,7 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
 
   async findAll( role?: ValidRoles ) {
     if ( role ) {
-      return await this.r17Cooperativas.findMany({
-        where: {
-          R17Activ: true,
-          R17Nom: { not: 'EnfoqueCooperativo' }
-        },
-        orderBy: {
-          R17Creada_en: 'desc'
-        },
-        include: {
-          sucursales: true,
-          usuarios: {
-            where: {
-              R12Activ: true,
-              R12Rol: role,
-            },
-            orderBy: {
-              R12Creado_en: 'desc'
-            },
-            select: { 
-              R12Id: true,
-              R12Ni: true,
-              R12Nom: true,
-              R12Suc_id: true,
-              R12Rol: true,
-              R12Activ: true,
-              sucursal: true,
-            }
-          },
-          productos: {
-            where: {
-              R13Activ: true,
-            },
-            orderBy: {
-              R13Creado_en: 'desc'
-            },
-            select: {
-              R13Id: true,
-              R13Nom: true,
-              R13Cat_id: true,
-              R13Activ: true,
-              R13Coop_id: true,
-              categoria: true,
-            }
-          },
-          grupos: {
-            orderBy: {
-              R02Creado_en: 'desc'
-            }
-          }
-        }
-      });
+      return await this._findAllWithRole( role )
     }
 
     return await this.r17Cooperativas.findMany({
@@ -191,8 +141,11 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         grupos: {
           orderBy: {
             R02Creado_en: 'desc'
+          },
+          include: {
+            rubros: true
           }
-        }
+        },
       }
     });
   }
@@ -496,5 +449,59 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         }
       }
     });
+  }
+
+  private async _findAllWithRole( role: ValidRoles ) {
+    return await this.r17Cooperativas.findMany({
+        where: {
+          R17Activ: true,
+          R17Nom: { not: 'EnfoqueCooperativo' }
+        },
+        orderBy: {
+          R17Creada_en: 'desc'
+        },
+        include: {
+          sucursales: true,
+          usuarios: {
+            where: {
+              R12Activ: true,
+              R12Rol: role,
+            },
+            orderBy: {
+              R12Creado_en: 'desc'
+            },
+            select: { 
+              R12Id: true,
+              R12Ni: true,
+              R12Nom: true,
+              R12Suc_id: true,
+              R12Rol: true,
+              R12Activ: true,
+              sucursal: true,
+            }
+          },
+          productos: {
+            where: {
+              R13Activ: true,
+            },
+            orderBy: {
+              R13Creado_en: 'desc'
+            },
+            select: {
+              R13Id: true,
+              R13Nom: true,
+              R13Cat_id: true,
+              R13Activ: true,
+              R13Coop_id: true,
+              categoria: true,
+            }
+          },
+          grupos: {
+            orderBy: {
+              R02Creado_en: 'desc'
+            }
+          }
+        }
+      });
   }
 }

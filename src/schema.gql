@@ -2,17 +2,38 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Grupo {
-  R02Id: String!
-  R02Nom: String!
-  R02Creado_en: DateTime!
-  R02Actualizado_en: DateTime!
+type Elemento {
+  R04Id: ID!
+  R04R_id: ID!
+  R04Nom: String!
+  R04Imp: String!
+  R04Creado_en: DateTime
+  R04Actualizado_en: DateTime
+  rubro: Rubro
 }
 
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Rubro {
+  R03Id: ID!
+  R03G_id: ID!
+  R03Nom: String!
+  R03Creado_en: DateTime
+  R03Actualizado_en: DateTime
+  grupo: Grupo
+  elementos: [Elemento!]
+}
+
+type Grupo {
+  R02Id: String!
+  R02Nom: String!
+  R02Creado_en: DateTime
+  R02Actualizado_en: DateTime
+  rubros: [Rubro!]
+}
 
 type Categoria {
   R14Id: String!
@@ -51,11 +72,11 @@ type Cooperativa {
   R17Nom: String!
   R17Activ: Boolean!
   R17Logo: String!
-  R17Creada_en: DateTime!
-  sucursales: [Sucursal!]!
-  usuarios: [Usuario!]!
-  productos: [Producto!]!
-  grupos: [Grupo!]!
+  R17Creada_en: DateTime
+  sucursales: [Sucursal!]
+  usuarios: [Usuario!]
+  productos: [Producto!]
+  grupos: [Grupo!]
 }
 
 type Query {
