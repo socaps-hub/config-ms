@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SucursalesService } from './sucursales.service';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { UpdateSucursalInput } from './dto/inputs/update-sucursale.input';
 
 @Controller()
 export class SucursalesHandler {
@@ -37,6 +38,13 @@ export class SucursalesHandler {
     @Payload() data: { id: string, user: Usuario }
   ) {
     return this.sucursalesService.findOne(data.id, data.user);
+  }
+
+  @MessagePattern('config.sucursales.update')
+  handleUpdate(
+    @Payload('updateSucursalInput') updateSucursalInput: UpdateSucursalInput
+  ) {
+    return this.sucursalesService.update( updateSucursalInput.id, updateSucursalInput );
   }
 
   // Puedes agregar `create`, `update` y `remove` cuando estén disponibles

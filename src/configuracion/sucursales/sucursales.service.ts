@@ -4,6 +4,7 @@ import { RpcException } from '@nestjs/microservices';
 import { Sucursal } from './entities/sucursal.entity';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { UpdateSucursalInput } from './dto/inputs/update-sucursale.input';
 
 @Injectable()
 export class SucursalesService extends PrismaClient implements OnModuleInit {
@@ -86,11 +87,59 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
     return sucursal
   }
 
-  // update(id: number, updateSucursaleInput: UpdateSucursaleInput) {
-  //   return `This action updates a #${id} sucursale`;
-  // }
+  async update(id: string, updateSucursalInput: UpdateSucursalInput ): Promise<Sucursal> {
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} sucursale`;
+    const { R11Nom, R11NumSuc, R11Coop_id } = updateSucursalInput;
+    
+    // Verificar existencia
+    const existing = await this.r11Sucursal.findFirst({
+      where: { R11Id: id, R11Coop_id },
+    });
+    
+    if (!existing) {
+      throw new RpcException({
+        message: `Sucursal con id ${id} no encontrada`,
+        status: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    if ( R11Nom ) {
+      const sucursal = await this.r11Sucursal.findFirst({
+        where: { R11Nom: R11Nom.trim(), R11Coop_id }
+      })
+
+      if ( sucursal && sucursal.R11Id !== id ) {
+        throw new RpcException({
+          message: `La sucursal ${ R11Nom } ya existe en la cooperativa`,
+          status: HttpStatus.BAD_REQUEST
+        })
+      }
+    }
+
+    return await this.r11Sucursal.update({
+      where: { R11Id: id },
+      data: {
+        R11Nom: R11Nom ?? existing.R11Nom,
+        R11NumSuc: R11NumSuc ?? existing.R11NumSuc,
+      },
+    });
+  }
+
+  // async remove(id: string): Promise<Sucursal> {
+  //   // Verificar existencia
+  //   const existing = await this.r11Sucursal.findFirst({
+  //     where: { R11Id: id },
+  //   });
+
+  //   if (!existing) {
+  //     throw new RpcException({
+  //       message: `Sucursal con id ${id} no encontrada`,
+  //       status: HttpStatus.NOT_FOUND,
+  //     });
+  //   }
+
+  //   return await this.r11Sucursal.delete({
+  //     where: { R11Id: id },
+  //   });
   // }
 }

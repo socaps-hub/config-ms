@@ -6,6 +6,7 @@ import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { UpdateSucursalInput } from './dto/inputs/update-sucursale.input';
 
 @Resolver(() => Sucursal)
 @UseGuards( AuthGraphQLGuard )
@@ -44,13 +45,15 @@ export class SucursalesResolver {
     return this.sucursalesService.findOne(id, user);
   }
 
-  // @Mutation(() => Sucursale)
-  // updateSucursale(@Args('updateSucursaleInput') updateSucursaleInput: UpdateSucursaleInput) {
-  //   return this.sucursalesService.update(updateSucursaleInput.id, updateSucursaleInput);
-  // }
+  @Mutation(() => Sucursal)
+  updateSucursal(
+    @Args('updateSucursaleInput') updateSucursalInput: UpdateSucursalInput
+  ) {
+    return this.sucursalesService.update(updateSucursalInput.id, updateSucursalInput);
+  }
 
-  // @Mutation(() => Sucursale)
-  // removeSucursale(@Args('id', { type: () => Int }) id: number) {
+  // @Mutation(() => Sucursal)
+  // removeSucursal(@Args('id', { type: () => ID }, ParseUUIDPipe) id: string) {
   //   return this.sucursalesService.remove(id);
   // }
 }

@@ -106,6 +106,7 @@ type Mutation {
   activateCooperativa(name: String!): Cooperativa!
   desactivateCooperativa(id: String!): Cooperativa!
   createSucursal(createSucursalInput: CreateSucursaleInput!): Sucursal!
+  updateSucursal(updateSucursaleInput: UpdateSucursalInput!): Sucursal!
   createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
   createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
   updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
@@ -132,6 +133,13 @@ input CreateSucursaleInput {
   R11NumSuc: String!
   R11Nom: String!
   R11Coop_id: String!
+}
+
+input UpdateSucursalInput {
+  R11NumSuc: String
+  R11Nom: String
+  R11Coop_id: String
+  id: ID!
 }
 
 input CreateCategoriaInput {
