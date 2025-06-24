@@ -90,7 +90,7 @@ type Query {
   categoria(id: ID!): Categoria!
   usuarios(role: ValidRoles): [Usuario!]!
   usuario(ni: String!): Usuario!
-  productos: [Producto!]!
+  productos(categoriaId: String): [Producto!]!
 }
 
 enum ValidRoles {

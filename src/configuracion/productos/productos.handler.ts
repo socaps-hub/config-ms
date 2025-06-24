@@ -22,9 +22,9 @@ export class ProductosHandler {
 
     @MessagePattern('config.productos.getAll')
     handleGetAll(
-        @Payload('usuario') usuario: Usuario
+        @Payload() data: { usuario: Usuario, categoriaId?: string }
     ) {
-        return this._service.findAll(usuario);
+        return this._service.findAll( data.usuario, data.categoriaId );
     }
     
     @MessagePattern('config.productos.update')

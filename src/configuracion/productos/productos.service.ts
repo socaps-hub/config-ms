@@ -69,7 +69,12 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })    
   }
 
-  async findAll(user: Usuario): Promise<Producto[]> {
+  async findAll(user: Usuario, categoriaId?: string): Promise<Producto[]> {
+
+    if ( categoriaId ) {
+      return await this.findByCategoria( categoriaId, user )
+    }
+
     return await this.r13Producto.findMany({
       orderBy: {
         R13Creado_en: 'desc'
@@ -82,6 +87,22 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         categoria: true
       }
     });
+  }
+
+  async findByCategoria( categoriaId: string, user: Usuario ): Promise<Producto[]> {
+    return await this.r13Producto.findMany({
+      orderBy: {
+        R13Creado_en: 'desc'
+      },
+      where: {
+        R13Coop_id: user.R12Coop_id,
+        R13Cat_id: categoriaId,
+        R13Activ: true
+      },
+      include: {
+        categoria: true
+      }
+    })
   }
 
   async findByID(id: string) {
@@ -164,8 +185,10 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
   }
 
   async activate( name: string, coopId: string ) {
+    console.log(name, coopId);
+    
     const producto = await this.r13Producto.findFirst({
-      where: { R13Nom: name , R13Coop_id: coopId },
+      where: { R13Nom: name.toLowerCase().trim(), R13Coop_id: coopId },
       include: {
         categoria: {
           select: {

@@ -24,9 +24,10 @@ export class ProductosResolver {
 
   @Query(() => [Producto], { name: 'productos' })
   findAll(
-    @GetUserGraphQL() user: Usuario
+    @GetUserGraphQL() user: Usuario,
+    @Args('categoriaId', { type: () => String, nullable: true }) categoriaId?: string,
   ) {
-    return this.productosService.findAll(user);
+    return this.productosService.findAll(user, categoriaId);
   }
 
   // @Query(() => Producto, { name: 'producto' })
