@@ -64,7 +64,7 @@ type Usuario {
   R12Rol: String!
   R12Activ: Boolean!
   R12Creado_en: DateTime!
-  sucursal: Sucursal!
+  sucursal: Sucursal
 }
 
 type Cooperativa {

@@ -29,6 +29,6 @@ export class Usuario {
 
   R12Coop_id: string
 
-  @Field( () => Sucursal )
-  sucursal: Sucursal
+  @Field( () => Sucursal, { nullable: true } )
+  sucursal?: Sucursal
 }
