@@ -64,10 +64,10 @@ model R01Prestamo {
   R01Dir            String   @db.Char(2)
   R01SP_id          String   @db.Uuid
   R01Ejvo_id        String   @db.Uuid
-  R01Fsol           DateTime
-  R01FRec           DateTime
-  R01FRev           DateTime
-  R01FMov           DateTime
+  R01Fsol           String
+  R01FRec           String
+  R01FRev           String
+  R01FMov           String
   R01ObsA           String?
   R01ObsM           String?
   R01ObsB           String?

@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 import { Request } from 'express';
+import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { envs } from 'src/config/envs';
   
@@ -42,7 +43,9 @@ export class AuthGraphQLGuard implements CanActivate {
             );
 
             // const user = await this._usuariosService.findByID( payload.R12Id )
-            const user = await this._client.send('supervision.usuarios.getByID', { id: payload.R12Id })
+            const user = await firstValueFrom(
+                this._client.send('config.usuarios.getByID', { id: payload.R12Id })
+            )
 
             request['user'] = user;
             
