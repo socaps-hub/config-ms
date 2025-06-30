@@ -24,36 +24,39 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   async findAll( role: ValidRoles, user: Usuario ): Promise<Usuario[]> {
 
-    let users: Usuario[] = []
+    console.log(user);
+    
 
-    if ( role ) {
-      users = await this.r12Usuario.findMany({
+    if ( user.R12Rol === ValidRoles.admin ) {
+      return await this.r12Usuario.findMany({
         orderBy: {
           R12Creado_en: 'desc'
         },
-        where: { R12Rol: role, R12Coop_id: user.R12Coop_id, R12Activ: true },
+        where: { 
+          R12Rol: role,
+          R12Coop_id: user.R12Coop_id, 
+          R12Activ: true 
+        },
         include: {
           sucursal: true
         }
       })
-      
-      return users
     }
 
-    users = await this.r12Usuario.findMany({
-      where: {
-        R12Coop_id: user.R12Coop_id,
-        R12Activ: true
-      },
+    return await this.r12Usuario.findMany({
       orderBy: {
-          R12Creado_en: 'desc'
+        R12Creado_en: 'desc'
+      },
+      where: { 
+        R12Rol: role, 
+        R12Suc_id: user.R12Suc_id,
+        R12Coop_id: user.R12Coop_id, 
+        R12Activ: true 
       },
       include: {
         sucursal: true
       }
     })
-
-    return users
   }
 
   async create(createUsuarioInput: CreateUsuarioInput) {
