@@ -24,9 +24,6 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   async findAll( role: ValidRoles, user: Usuario ): Promise<Usuario[]> {
 
-    console.log(user);
-    
-
     if ( user.R12Rol === ValidRoles.admin ) {
       return await this.r12Usuario.findMany({
         orderBy: {
