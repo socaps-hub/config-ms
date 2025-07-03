@@ -12,6 +12,7 @@ import { CommonModule } from './common/common.module';
       driver: ApolloDriver,
      // debug: false,
       playground: false,
+      introspection: true,
       autoSchemaFile: join( process.cwd(), 'src/schema.gql'),
       plugins: [
         ApolloServerPluginLandingPageLocalDefault(),
