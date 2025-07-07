@@ -6,6 +6,7 @@ import { Usuario } from "../usuarios/entities/usuario.entity";
 import { CreateUsuarioInput } from "../usuarios/dto/inputs/create-usuario.input";
 import { UpdateUsuarioInput } from "./dto/inputs/update-usuario.input";
 import { ValidRoles } from "src/common/enums/valid-roles.enum";
+import { ChangePasswordInput } from "./dto/inputs/change-password.input";
 
 @Controller()
 export class UsuariosHandler {
@@ -61,5 +62,12 @@ export class UsuariosHandler {
         @Payload('userNI') userNI: string
     ) {
         return this._usuariosService.activate(userNI.toUpperCase());
+    }
+
+    @MessagePattern('config.usuarios.changePassword')
+    handleChangePassword(
+        @Payload() data: { input: ChangePasswordInput, user: Usuario }
+    ) {
+        return this._usuariosService.changePassword( data.input, data.user )
     }
 }

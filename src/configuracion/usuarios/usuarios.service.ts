@@ -7,6 +7,7 @@ import { Usuario } from './entities/usuario.entity';
 import { bcryptAdapter } from 'src/config';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { ValidRoles } from 'src/common/enums/valid-roles.enum';
+import { ChangePasswordInput } from './dto/inputs/change-password.input';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -241,6 +242,22 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       }
     })
 
+  }
+
+  async changePassword(input: ChangePasswordInput, user: Usuario): Promise<boolean> {
+    const usuario = await this.findByID( user.R12Id )
+
+    const valid = await bcryptAdapter.compare(input.currentPassword, usuario.R12Password);
+    if (!valid) throw new RpcException({ message: 'Contraseña actual incorrecta', status: 401 });
+
+    const hashed = await bcryptAdapter.hash(input.newPassword);
+
+    await this.r12Usuario.update({
+      where: { R12Id: user.R12Id },
+      data: { R12Password: hashed }
+    });
+
+    return true;
   }
 
 }
