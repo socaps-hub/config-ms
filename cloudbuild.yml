@@ -1,21 +1,57 @@
+# steps:
+#   - name: "gcr.io/cloud-builders/docker"
+#     args:
+#       [
+#         "build",
+#         "-t",
+#         "northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms",
+#         "-f",
+#         "dockerfile.prod",
+#         "--platform=linux/amd64",
+#         ".",
+#       ]
+#   - name: "gcr.io/cloud-builders/docker"
+#     args:
+#       [
+#         "push",
+#         "northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms",
+#       ]
+# options:   
+#     logging: CLOUD_LOGGING_ONLY
+#     default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
+
 steps:
-  - name: "gcr.io/cloud-builders/docker"
+  # Construye la imagen con un SHA dinámico
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', 'northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA',
+      '-f', 'dockerfile.prod',
+      '--platform=linux/amd64',
+      '.'
+    ]
+
+  # Empuja la imagen
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      'northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA'
+    ]
+
+  # Actualiza el deployment en Kubernetes
+  - name: 'gcr.io/cloud-builders/kubectl'
     args:
       [
-        "build",
-        "-t",
-        "northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms",
-        "-f",
-        "dockerfile.prod",
-        "--platform=linux/amd64",
-        ".",
+        'set',
+        'image',
+        'deployment/config-ms',
+        'config-ms=northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA'
       ]
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "push",
-        "northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms",
-      ]
-options:   
-    logging: CLOUD_LOGGING_ONLY
-    default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=northamerica-south1'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=socaps-hub-kubernetes'
+    id: 'kubectl-image-update'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
