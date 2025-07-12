@@ -16,6 +16,8 @@ enum ResFaseI {
 enum ResFaseII {
   S
   NS
+  C
+  NA
 }
 
 enum ResFaseIII {
@@ -163,10 +165,9 @@ model R07EvaluacionFase2 {
   R07Id     String      @id @default(uuid()) @db.Uuid
   R07P_num  String      @db.Char(8)
   R07E_id   String      @db.Uuid
-  R07Res    ResFaseII
-  R07Obs    String?
+  R07Res    ResFaseII  
   R07Ev_por String      @db.Uuid
-  R07Ev_en  DateTime    @default(now())
+  R07Ev_en  String      
 
   elemento  R04Elemento @relation(fields: [R07E_id], references: [R04Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R07Ev_por], references: [R12Id])
@@ -182,6 +183,8 @@ model R08EvaluacionResumenFase2 {
   R08Rc    Int
   R08Cal   Calificativo
   R08Res   Resolucion
+  R08Obs   String
+  R08FSeg  String
 
   prestamo R01Prestamo  @relation(fields: [R08P_num], references: [R01NUM], onDelete: Cascade)
 }
