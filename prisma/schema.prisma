@@ -193,14 +193,13 @@ model R09EvaluacionFase3 {
   R09Id     String      @id @default(uuid()) @db.Uuid
   R09P_num  String      @db.Char(8)
   R09E_id   String      @db.Uuid
-  R09Res    ResFaseIII
-  R09Obs    String?
-  R09Ev_por String      @db.Uuid
-  R09Ev_en  DateTime    @default(now())
+  R09Res    ResFaseIII    
+  R09Ev_en  String
 
-  elemento  R04Elemento @relation(fields: [R09E_id], references: [R04Id], onDelete: Cascade)
-  evaluador R12Usuario  @relation(fields: [R09Ev_por], references: [R12Id])
+  elemento  R04Elemento @relation(fields: [R09E_id], references: [R04Id], onDelete: Cascade)  
   prestamo  R01Prestamo @relation(fields: [R09P_num], references: [R01NUM], onDelete: Cascade)
+
+  R12Usuario R12Usuario[]
 }
 
 model R10EvaluacionResumenFase3 {
@@ -209,8 +208,12 @@ model R10EvaluacionResumenFase3 {
   R10Pendientes Int
   R10Rc         Int
   R10Cal        Calificativo
+  R10Obs        String
+  R10FDes       String
+  R10Ev_por     String      @db.Uuid
 
   prestamo      R01Prestamo  @relation(fields: [R10P_num], references: [R01NUM], onDelete: Cascade)
+  evaluador     R12Usuario  @relation(fields: [R10Ev_por], references: [R12Id])
 }
 
 model R11Sucursal {
@@ -247,6 +250,8 @@ model R12Usuario {
   EvaluacionFase2   R07EvaluacionFase2[]
   EvaluacionFase3   R09EvaluacionFase3[]
   EvaluacionFase4   R15EvaluacionFase4[]
+
+  R10EvaluacionResumenFase3 R10EvaluacionResumenFase3[]
 }
 
 model R13Producto {
