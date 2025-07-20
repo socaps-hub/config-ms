@@ -25,7 +25,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '-t', 'northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA',
+      '-t', 'northamerica-south1-docker.pkg.dev/socaps-hub-dev-466500/image-registry/config-ms:$SHORT_SHA',
       '-f', 'dockerfile.prod',
       '--platform=linux/amd64',
       '.'
@@ -35,7 +35,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push',
-      'northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA'
+      'northamerica-south1-docker.pkg.dev/socaps-hub-dev-466500/image-registry/config-ms:$SHORT_SHA'
     ]
 
   # Actualiza el deployment en Kubernetes
@@ -45,7 +45,7 @@ steps:
         'set',
         'image',
         'deployment/config-ms',
-        'config-ms=northamerica-south1-docker.pkg.dev/socaps-hub-dev/image-registry/config-ms:$SHORT_SHA'
+        'config-ms=northamerica-south1-docker.pkg.dev/socaps-hub-dev-466500/image-registry/config-ms:$SHORT_SHA'
       ]
     env:
       - 'CLOUDSDK_COMPUTE_REGION=northamerica-south1'
