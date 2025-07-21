@@ -26,8 +26,6 @@ async function bootstrap() {
     })
   );
 
-  console.log('Segundo cambio');  
-
   await app.startAllMicroservices()
   console.log('✅ Microservicio conectado a NATS (Config-MS)');
   
