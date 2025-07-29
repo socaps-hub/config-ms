@@ -8,6 +8,9 @@ import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateProductoInput } from './dto/inputs/create-producto.input';
 import { UpdateProductoInput } from './dto/inputs/update-producto.input';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateProductoImportDto } from './dto/inputs/create-producto-import.dto';
+import { CreateManyFromExcelArgs } from './dto/args/create-many-from-excel.arg';
 
 @Resolver(() => Producto)
 @UseGuards( AuthGraphQLGuard )
@@ -56,5 +59,12 @@ export class ProductosResolver {
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
   ) {
     return this.productosService.desactivate(id);
+  }
+
+  @Mutation(() => BooleanResponse)
+  createManyFromExcel(
+    @Args('createManyFromExcelArgs') createManyFromExcelArgs: CreateManyFromExcelArgs,
+  ) {
+    return this.productosService.createManyFromExcel(createManyFromExcelArgs.data, createManyFromExcelArgs.coopId);
   }
 }

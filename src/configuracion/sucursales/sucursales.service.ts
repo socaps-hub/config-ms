@@ -5,6 +5,8 @@ import { Sucursal } from './entities/sucursal.entity';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { UpdateSucursalInput } from './dto/inputs/update-sucursale.input';
+import { CreateSucursalImportDto } from './dto/inputs/create-sucursal-import.dto';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 
 @Injectable()
 export class SucursalesService extends PrismaClient implements OnModuleInit {
@@ -45,6 +47,55 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
         ...createSucursaleInput
       }
     });
+  }
+
+  async createManyFromExcel(data: CreateSucursalImportDto[], coopId: string): Promise<BooleanResponse> {
+    const sucursalesToCreate: any[] = [];
+
+    try {
+
+      for (const item of data) {
+        const nombre = item.Nombre?.trim();
+
+        if (!nombre) continue; // salta vacíos
+
+        // Verifica si el producto ya existe en esta cooperativa
+        const [sucursalWithSameName, sucursalWithSameNumSuc] = await Promise.all([
+          this.r11Sucursal.findFirst({ where: { R11Nom: nombre, R11Coop_id: coopId } }),
+          this.r11Sucursal.findFirst({ where: { R11NumSuc: item.Numero, R11Coop_id: coopId } }),
+        ])
+
+        if (sucursalWithSameName || sucursalWithSameNumSuc) continue;
+
+        sucursalesToCreate.push({
+          R11Nom: nombre,
+          R11NumSuc: item.Numero,
+          R11Coop_id: coopId,
+        });
+      }
+
+      if (!sucursalesToCreate.length) {
+        return {
+          success: false,
+          message: 'No se encontraron sucursales nuevas para agregar. Tal vez esten repetidas.',
+        };
+      }
+
+      const result = await this.r11Sucursal.createMany({
+        data: sucursalesToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} sucursales creadas exitosamente.`,
+      };
+      
+    } catch (err) {
+      console.log(err);
+      return { success: false, message: 'Error en la importación de sucursales' }
+    }
+
   }
 
   async findAll( user: Usuario ): Promise<Sucursal[]> {

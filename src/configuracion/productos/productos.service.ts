@@ -8,6 +8,8 @@ import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateProductoInput } from './dto/inputs/create-producto.input';
 import { UpdateProductoInput } from './dto/inputs/update-producto.input';
 import { NATS_SERVICE } from 'src/config';
+import { CreateProductoImportDto } from './dto/inputs/create-producto-import.dto';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 
 @Injectable()
 export class ProductosService  extends PrismaClient implements OnModuleInit {
@@ -254,4 +256,75 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
       }
     })
   }
+
+  async createManyFromExcel(data: CreateProductoImportDto[], coopId: string): Promise<BooleanResponse> {
+    const productosToCreate: any[] = [];
+
+    try {
+
+      for (const item of data) {
+        const nombre = item.Nombre?.trim().toLowerCase();
+
+        if (!nombre) continue; // salta vacíos
+
+        // Verifica si el producto ya existe en esta cooperativa
+        const productoExistente = await this.r13Producto.findFirst({
+          where: {
+            R13Coop_id: coopId,
+            R13Nom: nombre,
+          },
+        });
+
+        if (productoExistente) continue;
+
+        // Busca la categoría por nombre
+        const categoria = await this.r14Categoria.findFirst({
+          where: {
+            // R14Coop_id: coopId,
+            R14Nom: {
+              contains: item.Categoria,
+              mode: 'insensitive',
+            },
+          },
+        });
+
+        if (!categoria) {
+          throw new RpcException({
+            message: `Categoría no encontrada: ${item.Categoria}`,
+            status: HttpStatus.BAD_REQUEST
+          });
+        }
+
+        productosToCreate.push({
+          R13Nom: nombre,
+          R13Cat_id: categoria.R14Id,
+          R13Coop_id: coopId,
+          R13Activ: true,
+        });
+      }
+
+      if (!productosToCreate.length) {
+        return {
+          success: false,
+          message: 'No se encontraron productos nuevos para agregar. Tal vez esten repetidos o esten desactivados.',
+        };
+      }
+
+      const result = await this.r13Producto.createMany({
+        data: productosToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} productos creados exitosamente.`,
+      };
+      
+    } catch (err) {
+      console.log(err);
+      return { success: false, message: 'Error en la importación de productos' }
+    }
+
+  }
+
 }

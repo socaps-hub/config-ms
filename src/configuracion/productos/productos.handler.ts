@@ -5,6 +5,7 @@ import { Usuario } from "../usuarios/entities/usuario.entity";
 import { ProductosService } from "./productos.service";
 import { CreateProductoInput } from "./dto/inputs/create-producto.input";
 import { UpdateProductoInput } from "./dto/inputs/update-producto.input";
+import { CreateProductoImportDto } from "./dto/inputs/create-producto-import.dto";
 
 @Controller()
 export class ProductosHandler {
@@ -46,6 +47,13 @@ export class ProductosHandler {
         @Payload('id', ParseUUIDPipe) id: string
     ) {
         return this._service.desactivate(id);
+    }
+
+    @MessagePattern('config.productos.createManyFromExcel')
+    handleCreateManyFromExcel(
+        @Payload() { data, coopId }: { data: CreateProductoImportDto[], coopId: string }
+    ) {
+        return this._service.createManyFromExcel( data, coopId );
     }
 
     

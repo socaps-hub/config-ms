@@ -4,6 +4,7 @@ import { SucursalesService } from './sucursales.service';
 import { CreateSucursaleInput } from './dto/inputs/create-sucursale.input';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { UpdateSucursalInput } from './dto/inputs/update-sucursale.input';
+import { CreateSucursalImportDto } from './dto/inputs/create-sucursal-import.dto';
 
 @Controller()
 export class SucursalesHandler {
@@ -45,6 +46,13 @@ export class SucursalesHandler {
     @Payload('updateSucursalInput') updateSucursalInput: UpdateSucursalInput
   ) {
     return this.sucursalesService.update( updateSucursalInput.id, updateSucursalInput );
+  }
+
+  @MessagePattern('config.sucursales.createManyFromExcel')
+  handleCreateManyFromExcel(
+    @Payload() { data, coopId }: { data: CreateSucursalImportDto[], coopId: string }
+  ) {
+    return this.sucursalesService.createManyFromExcel( data, coopId );
   }
 
   // Puedes agregar `create`, `update` y `remove` cuando estén disponibles
