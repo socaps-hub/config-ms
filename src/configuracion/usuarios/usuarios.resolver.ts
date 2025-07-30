@@ -9,6 +9,8 @@ import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { ChangePasswordInput } from './dto/inputs/change-password.input';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateManyUsuariosFromExcelArgs } from './dto/args/create-many-usuario-from-excel.arg';
 
 @Resolver(() => Usuario)
 @UseGuards( AuthGraphQLGuard )
@@ -63,5 +65,12 @@ export class UsuariosResolver {
     @GetUserGraphQL() user: Usuario,
   ): Promise<boolean> {
     return this.usuariosService.changePassword(data, user);
+  }
+
+  @Mutation(() => BooleanResponse)
+  createManyUsuariosFromExcel(
+    @Args('createManyUsuariosFromExcelArgs') createManyUsuariosFromExcelArgs: CreateManyUsuariosFromExcelArgs,
+  ) {
+    return this.usuariosService.createManyFromExcel(createManyUsuariosFromExcelArgs.data, createManyUsuariosFromExcelArgs.coopId);
   }
 }

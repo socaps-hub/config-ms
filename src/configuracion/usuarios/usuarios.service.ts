@@ -8,6 +8,8 @@ import { bcryptAdapter } from 'src/config';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { ValidRoles } from 'src/common/enums/valid-roles.enum';
 import { ChangePasswordInput } from './dto/inputs/change-password.input';
+import { CreateUsuarioImportDto } from './dto/inputs/create-usuario-import.dto';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -68,7 +70,6 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       if ( userDB ) {
 
         if ( !userDB.R12Activ ) {
-          console.log(userDB.R12Rol);
           
           throw new RpcException({
             message: `${ userDB.R12Rol.toUpperCase() } con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`,
@@ -87,6 +88,8 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
+          R12Nom: createUsuarioInput.R12Nom.toUpperCase(),
+          R12Ni: createUsuarioInput.R12Ni.toUpperCase(),
           R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
         },
@@ -258,6 +261,84 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     });
 
     return true;
+  }
+
+  async createManyFromExcel(data: CreateUsuarioImportDto[], coopId: string): Promise<BooleanResponse> {
+    const usuariosToCreate: any[] = [];
+
+    try {
+      for (const item of data) {
+        const nombre = item.Nombre?.trim().toUpperCase();
+        const usuario = item.Usuario?.trim().toUpperCase();
+        const password = item.Password?.trim();
+        const rol = item.Rol?.trim().toLowerCase();
+        const numSucursal = item.Sucursal;
+
+        if (!nombre || !usuario || !password || numSucursal === undefined || !rol) continue;
+
+        // Buscar sucursal por R11NumSuc
+        const sucursal = await this.r11Sucursal.findFirst({
+          where: {
+            R11NumSuc: numSucursal,
+            R11Coop_id: coopId,
+          },
+          select: { R11Id: true },
+        });
+
+        if (!sucursal) {
+          throw new RpcException({
+            message: `Sucursal no encontrada con número: ${numSucursal}`,
+            status: HttpStatus.BAD_REQUEST,
+          });
+        }
+
+        // Verificar si el usuario ya existe en esa cooperativa
+        const existe = await this.r12Usuario.findFirst({
+          where: {
+            R12Ni: usuario,
+            R12Coop_id: coopId,
+          },
+        });
+
+        if (existe) continue;
+
+        const hashedPassword = bcryptAdapter.hash(password);
+
+        usuariosToCreate.push({
+          R12Nom: nombre,
+          R12Ni: usuario,
+          R12Password: hashedPassword,
+          R12Rol: rol,
+          R12Suc_id: sucursal.R11Id,
+          R12Coop_id: coopId,
+          R12Activ: true,
+        });
+      }
+
+      if (!usuariosToCreate.length) {
+        return {
+          success: false,
+          message: 'No se encontraron usuarios nuevos para agregar. Tal vez ya existen en la cooperativa.',
+        };
+      }
+
+      const result = await this.r12Usuario.createMany({
+        data: usuariosToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} usuarios creados exitosamente.`,
+      };
+
+    } catch (err) {
+      console.error(err);
+      return {
+        success: false,
+        message: 'Error en la importación de usuarios.',
+      };
+    }
   }
 
 }

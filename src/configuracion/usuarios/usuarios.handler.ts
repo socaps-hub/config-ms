@@ -7,6 +7,7 @@ import { CreateUsuarioInput } from "../usuarios/dto/inputs/create-usuario.input"
 import { UpdateUsuarioInput } from "./dto/inputs/update-usuario.input";
 import { ValidRoles } from "src/common/enums/valid-roles.enum";
 import { ChangePasswordInput } from "./dto/inputs/change-password.input";
+import { CreateUsuarioImportDto } from "./dto/inputs/create-usuario-import.dto";
 
 @Controller()
 export class UsuariosHandler {
@@ -69,5 +70,12 @@ export class UsuariosHandler {
         @Payload() data: { input: ChangePasswordInput, user: Usuario }
     ) {
         return this._usuariosService.changePassword( data.input, data.user )
+    }
+
+    @MessagePattern('config.usuarios.createManyFromExcel')
+    handleCreateManyFromExcel(
+        @Payload() { data, coopId }: { data: CreateUsuarioImportDto[], coopId: string }
+    ) {
+        return this._usuariosService.createManyFromExcel( data, coopId )
     }
 }
