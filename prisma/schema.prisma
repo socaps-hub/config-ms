@@ -86,7 +86,7 @@ model R01Prestamo {
   ejecutivo   R12Usuario      @relation("Ejecutivo", fields: [R01Ejvo_id], references: [R12Id])
   producto    R13Producto     @relation(fields: [R01Pro_id], references: [R13Id])
   categoria   R14Categoria    @relation(fields: [R01Cat_id], references: [R14Id])
-  cooperativa R17Cooperativas @relation(fields: [R01Coop_id], references: [R17Id])
+  cooperativa R17Cooperativas @relation(fields: [R01Coop_id], references: [R17Id], onDelete: Cascade)
 
   evaluacionesF1 R05EvaluacionFase1[]
   evaluacionesF2 R07EvaluacionFase2[]
@@ -106,7 +106,7 @@ model R02Grupo {
   R02Creado_en      DateTime @default(now())
   R02Actualizado_en DateTime @updatedAt
 
-  cooperativa R17Cooperativas @relation(fields: [R02Coop_id], references: [R17Id])
+  cooperativa R17Cooperativas @relation(fields: [R02Coop_id], references: [R17Id], onDelete: Cascade)
   rubros      R03Rubro[]
 }
 
@@ -231,7 +231,7 @@ model R11Sucursal {
   R11Creada_en      DateTime        @default(now())
 
   prestamos         R01Prestamo[]
-  cooperativa       R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id])
+  cooperativa       R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id], onDelete: Cascade)
   usuarios          R12Usuario[]
 }
 
@@ -247,7 +247,7 @@ model R12Usuario {
   R12Password       String
   R12Actualizado_en DateTime             @updatedAt
 
-  cooperativa       R17Cooperativas      @relation(fields: [R12Coop_id], references: [R17Id])
+  cooperativa       R17Cooperativas      @relation(fields: [R12Coop_id], references: [R17Id], onDelete: Cascade)
   sucursal          R11Sucursal          @relation(fields: [R12Suc_id], references: [R11Id])
 
   Prestamo_Ejvo     R01Prestamo[]        @relation("Ejecutivo")
@@ -279,7 +279,7 @@ model R13Producto {
 
   prestamos         R01Prestamo[]
   categoria         R14Categoria    @relation(fields: [R13Cat_id], references: [R14Id])
-  cooperativa       R17Cooperativas @relation(fields: [R13Coop_id], references: [R17Id])
+  cooperativa       R17Cooperativas @relation(fields: [R13Coop_id], references: [R17Id], onDelete: Cascade)
 }
 
 model R14Categoria {
@@ -290,7 +290,7 @@ model R14Categoria {
   R14Actualizado_en DateTime        @updatedAt
   R14Creada_en      DateTime        @default(now())
 
-  cooperativa       R17Cooperativas @relation(fields: [R14Coop_id], references: [R17Id])
+  cooperativa       R17Cooperativas @relation(fields: [R14Coop_id], references: [R17Id], onDelete: Cascade)
   prestamos         R01Prestamo[]
   productos         R13Producto[]
 }
@@ -333,5 +333,5 @@ model R18LimitePrudencial {
   R18Coop_id        String          @db.Uuid
   R18Creado_en      DateTime        @default(now())
   R18Actualizado_en DateTime        @updatedAt
-  cooperativa       R17Cooperativas @relation(fields: [R18Coop_id], references: [R17Id])
+  cooperativa       R17Cooperativas @relation(fields: [R18Coop_id], references: [R17Id], onDelete: Cascade)
 }
