@@ -144,15 +144,11 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   async update( id: string, updateUsuarioInput: UpdateUsuarioInput ) {
 
-    const { R12Suc_id, R12Ni, R12Nom, R12Password } = updateUsuarioInput
-
-    console.log(R12Password);
-    
+    const { R12Suc_id, R12Ni, R12Nom, R12Password } = updateUsuarioInput    
     
     if ( R12Ni ) {
       
-      const user = await this.findByNI( R12Ni )
-      
+      const user = await this.findByID( id )      
       
       if (user && user.R12Id !== id) {
         throw new RpcException({
