@@ -39,6 +39,23 @@ enum Resolucion {
   PASA_COMITE
 }
 
+enum GrupoTipo {
+  SISCONCRE
+  SISCONCAP
+}
+
+enum Figura {
+  MENOR
+  SOCIO
+}
+
+enum Movimiento {
+  ACTUALIZACION
+  ALTA
+  APERTURA
+  BAJA
+}
+
 model R17Cooperativas {
   R17Id        String   @id @default(uuid()) @db.Uuid
   R17Nom       String
@@ -46,13 +63,15 @@ model R17Cooperativas {
   R17Logo      String
   R17Creada_en DateTime @default(now())
 
-  sucursales R11Sucursal[]
-  usuarios   R12Usuario[]
-  prestamos  R01Prestamo[]
-  grupos     R02Grupo[]
-  productos  R13Producto[]
-  categorias R14Categoria[]
+  sucursales       R11Sucursal[]
+  usuarios         R12Usuario[]
+  prestamos        R01Prestamo[]
+  grupos           R02Grupo[]
+  productos        R13Producto[]
+  categorias       R14Categoria[]
   limitePrudencial R18LimitePrudencial[]
+
+  movimientos R19Movimientos[]
 }
 
 model R01Prestamo {
@@ -62,7 +81,7 @@ model R01Prestamo {
   R01Nom            String
   R01Cat_id         String   @db.Uuid
   R01Pro_id         String   @db.Uuid
-  R01Imp            Float    
+  R01Imp            Float
   R01Dir            String   @db.Char(2)
   R01SP_id          String   @db.Uuid
   R01Ejvo_id        String   @db.Uuid
@@ -100,49 +119,50 @@ model R01Prestamo {
 }
 
 model R02Grupo {
-  R02Id             String   @id @default(uuid()) @db.Uuid
+  R02Id             String    @id @default(uuid()) @db.Uuid
   R02Nom            String
-  R02Coop_id        String   @db.Uuid
-  R02Creado_en      DateTime @default(now())
-  R02Actualizado_en DateTime @updatedAt
+  R02Coop_id        String    @db.Uuid
+  R02Tipo           GrupoTipo @default(SISCONCRE)
+  R02Creado_en      DateTime  @default(now())
+  R02Actualizado_en DateTime  @updatedAt
 
   cooperativa R17Cooperativas @relation(fields: [R02Coop_id], references: [R17Id], onDelete: Cascade)
   rubros      R03Rubro[]
 }
 
 model R03Rubro {
-  R03Id             String        @id @default(uuid()) @db.Uuid
-  R03G_id           String        @db.Uuid
+  R03Id             String   @id @default(uuid()) @db.Uuid
+  R03G_id           String   @db.Uuid
   R03Nom            String
-  R03Actualizado_en DateTime      @updatedAt
-  R03Creado_en      DateTime      @default(now())
+  R03Actualizado_en DateTime @updatedAt
+  R03Creado_en      DateTime @default(now())
 
-  grupo             R02Grupo      @relation(fields: [R03G_id], references: [R02Id], onDelete: Cascade)
-  elementos         R04Elemento[]
+  grupo     R02Grupo      @relation(fields: [R03G_id], references: [R02Id], onDelete: Cascade)
+  elementos R04Elemento[]
 }
 
 model R04Elemento {
-  R04Id             String               @id @default(uuid()) @db.Uuid
-  R04R_id           String               @db.Uuid
+  R04Id             String   @id @default(uuid()) @db.Uuid
+  R04R_id           String   @db.Uuid
   R04Nom            String
   R04Imp            String
-  R04Actualizado_en DateTime             @updatedAt
-  R04Creado_en      DateTime             @default(now())
+  R04Actualizado_en DateTime @updatedAt
+  R04Creado_en      DateTime @default(now())
 
-  rubro             R03Rubro             @relation(fields: [R04R_id], references: [R03Id], onDelete: Cascade)
-  evaluacionesF1    R05EvaluacionFase1[]
-  evaluacionesF2    R07EvaluacionFase2[]
-  evaluacionesF3    R09EvaluacionFase3[]
-  evaluacionesF4    R15EvaluacionFase4[]
+  rubro          R03Rubro             @relation(fields: [R04R_id], references: [R03Id], onDelete: Cascade)
+  evaluacionesF1 R05EvaluacionFase1[]
+  evaluacionesF2 R07EvaluacionFase2[]
+  evaluacionesF3 R09EvaluacionFase3[]
+  evaluacionesF4 R15EvaluacionFase4[]
 }
 
 model R05EvaluacionFase1 {
-  R05Id     String      @id @default(uuid()) @db.Uuid
-  R05P_num  String      @db.Char(8)
-  R05E_id   String      @db.Uuid
-  R05Res    ResFaseI    @default(NA)
-  R05Ev_por String      @db.Uuid
-  R05Ev_en  String      
+  R05Id     String   @id @default(uuid()) @db.Uuid
+  R05P_num  String   @db.Char(8)
+  R05E_id   String   @db.Uuid
+  R05Res    ResFaseI @default(NA)
+  R05Ev_por String   @db.Uuid
+  R05Ev_en  String
 
   elemento  R04Elemento @relation(fields: [R05E_id], references: [R04Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R05Ev_por], references: [R12Id])
@@ -157,19 +177,19 @@ model R06EvaluacionResumenFase1 {
   R06Rc     Int
   R06Cal    Calificativo
   R06Res    Resolucion
-  R06Ev_por String      @db.Uuid
+  R06Ev_por String       @db.Uuid
 
-  prestamo  R01Prestamo  @relation(fields: [R06P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R06P_num], references: [R01NUM], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R06Ev_por], references: [R12Id])
 }
 
 model R07EvaluacionFase2 {
-  R07Id     String      @id @default(uuid()) @db.Uuid
-  R07P_num  String      @db.Char(8)
-  R07E_id   String      @db.Uuid
-  R07Res    ResFaseII  
-  R07Ev_por String      @db.Uuid
-  R07Ev_en  String      
+  R07Id     String    @id @default(uuid()) @db.Uuid
+  R07P_num  String    @db.Char(8)
+  R07E_id   String    @db.Uuid
+  R07Res    ResFaseII
+  R07Ev_por String    @db.Uuid
+  R07Ev_en  String
 
   elemento  R04Elemento @relation(fields: [R07E_id], references: [R04Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R07Ev_por], references: [R12Id])
@@ -187,21 +207,21 @@ model R08EvaluacionResumenFase2 {
   R08Res    Resolucion
   R08Obs    String
   R08FSeg   String
-  R08Ev_por String      @db.Uuid
+  R08Ev_por String       @db.Uuid
 
-  prestamo R01Prestamo  @relation(fields: [R08P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R08P_num], references: [R01NUM], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R08Ev_por], references: [R12Id])
 }
 
 model R09EvaluacionFase3 {
-  R09Id     String      @id @default(uuid()) @db.Uuid
-  R09P_num  String      @db.Char(8)
-  R09E_id   String      @db.Uuid
-  R09Res    ResFaseIII    
-  R09Ev_en  String
+  R09Id    String     @id @default(uuid()) @db.Uuid
+  R09P_num String     @db.Char(8)
+  R09E_id  String     @db.Uuid
+  R09Res   ResFaseIII
+  R09Ev_en String
 
-  elemento  R04Elemento @relation(fields: [R09E_id], references: [R04Id], onDelete: Cascade)  
-  prestamo  R01Prestamo @relation(fields: [R09P_num], references: [R01NUM], onDelete: Cascade)
+  elemento R04Elemento @relation(fields: [R09E_id], references: [R04Id], onDelete: Cascade)
+  prestamo R01Prestamo @relation(fields: [R09P_num], references: [R01NUM], onDelete: Cascade)
 
   R12Usuario R12Usuario[]
 }
@@ -214,49 +234,50 @@ model R10EvaluacionResumenFase3 {
   R10Cal        Calificativo
   R10Obs        String
   R10FDes       String
-  R10Ev_por     String      @db.Uuid
-  R10Sup        String      @db.Uuid
+  R10Ev_por     String       @db.Uuid
+  R10Sup        String       @db.Uuid
 
-  prestamo      R01Prestamo  @relation(fields: [R10P_num], references: [R01NUM], onDelete: Cascade)
-  evaluador     R12Usuario  @relation(fields: [R10Ev_por], references: [R12Id])
-  supervisor    R12Usuario   @relation("SupervisorFase3", fields: [R10Sup], references: [R12Id])
+  prestamo   R01Prestamo @relation(fields: [R10P_num], references: [R01NUM], onDelete: Cascade)
+  evaluador  R12Usuario  @relation(fields: [R10Ev_por], references: [R12Id])
+  supervisor R12Usuario  @relation("SupervisorFase3", fields: [R10Sup], references: [R12Id])
 }
 
 model R11Sucursal {
-  R11Id             String          @id @default(uuid()) @db.Uuid
+  R11Id             String   @id @default(uuid()) @db.Uuid
   R11NumSuc         String
   R11Nom            String
-  R11Coop_id        String          @db.Uuid
-  R11Actualizado_en DateTime        @updatedAt
-  R11Creada_en      DateTime        @default(now())
+  R11Coop_id        String   @db.Uuid
+  R11Actualizado_en DateTime @updatedAt
+  R11Creada_en      DateTime @default(now())
 
-  prestamos         R01Prestamo[]
-  cooperativa       R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id], onDelete: Cascade)
-  usuarios          R12Usuario[]
+  prestamos   R01Prestamo[]
+  cooperativa R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id], onDelete: Cascade)
+  usuarios    R12Usuario[]
+
+  movimientos R19Movimientos[]
 }
 
 model R12Usuario {
-  R12Id             String               @id @default(uuid()) @db.Uuid
-  R12Ni             String               @unique
+  R12Id             String   @id @default(uuid()) @db.Uuid
+  R12Ni             String   @unique
   R12Nom            String
-  R12Suc_id         String               @db.Uuid
+  R12Suc_id         String   @db.Uuid
   R12Rol            String
-  R12Activ          Boolean              @default(true)
-  R12Creado_en      DateTime             @default(now())
-  R12Coop_id        String               @db.Uuid
+  R12Activ          Boolean  @default(true)
+  R12Creado_en      DateTime @default(now())
+  R12Coop_id        String   @db.Uuid
   R12Password       String
-  R12Actualizado_en DateTime             @updatedAt
+  R12Actualizado_en DateTime @updatedAt
 
-  cooperativa       R17Cooperativas      @relation(fields: [R12Coop_id], references: [R17Id], onDelete: Cascade)
-  sucursal          R11Sucursal          @relation(fields: [R12Suc_id], references: [R11Id])
+  cooperativa R17Cooperativas @relation(fields: [R12Coop_id], references: [R17Id], onDelete: Cascade)
+  sucursal    R11Sucursal     @relation(fields: [R12Suc_id], references: [R11Id])
 
-  Prestamo_Ejvo     R01Prestamo[]        @relation("Ejecutivo")
-  Prestamo_Super    R01Prestamo[]        @relation("Supervisor")
-  EvaluacionFase1   R05EvaluacionFase1[]
-  EvaluacionFase2   R07EvaluacionFase2[]
-  EvaluacionFase3   R09EvaluacionFase3[]
-  EvaluacionFase4   R15EvaluacionFase4[]
-
+  Prestamo_Ejvo   R01Prestamo[]        @relation("Ejecutivo")
+  Prestamo_Super  R01Prestamo[]        @relation("Supervisor")
+  EvaluacionFase1 R05EvaluacionFase1[]
+  EvaluacionFase2 R07EvaluacionFase2[]
+  EvaluacionFase3 R09EvaluacionFase3[]
+  EvaluacionFase4 R15EvaluacionFase4[]
 
   R16EvaluacionResumenFase4 R16EvaluacionResumenFase4[]
 
@@ -264,45 +285,49 @@ model R12Usuario {
 
   R08EvaluacionResumenFase2 R08EvaluacionResumenFase2[]
 
-  evaluacionesFase3Evaluador R10EvaluacionResumenFase3[]
+  evaluacionesFase3Evaluador  R10EvaluacionResumenFase3[]
   evaluacionesFase3Supervisor R10EvaluacionResumenFase3[] @relation("SupervisorFase3")
+
+  evaluacionResumenFase1Supervisor R21EvaluacionResumenFase1[] @relation("Supervisor")
+
+  evaluacionResumenFase1Ejecutivo R21EvaluacionResumenFase1[] @relation("Ejecutivo")
 }
 
 model R13Producto {
-  R13Id             String          @id @default(uuid()) @db.Uuid
+  R13Id             String   @id @default(uuid()) @db.Uuid
   R13Nom            String
-  R13Cat_id         String          @db.Uuid
+  R13Cat_id         String   @db.Uuid
   R13Activ          Boolean
-  R13Coop_id        String          @db.Uuid
-  R13Actualizado_en DateTime        @updatedAt
-  R13Creado_en      DateTime        @default(now())
+  R13Coop_id        String   @db.Uuid
+  R13Actualizado_en DateTime @updatedAt
+  R13Creado_en      DateTime @default(now())
 
-  prestamos         R01Prestamo[]
-  categoria         R14Categoria    @relation(fields: [R13Cat_id], references: [R14Id])
-  cooperativa       R17Cooperativas @relation(fields: [R13Coop_id], references: [R17Id], onDelete: Cascade)
+  prestamos   R01Prestamo[]
+  categoria   R14Categoria    @relation(fields: [R13Cat_id], references: [R14Id])
+  cooperativa R17Cooperativas @relation(fields: [R13Coop_id], references: [R17Id], onDelete: Cascade)
 }
 
 model R14Categoria {
-  R14Id             String          @id @default(uuid()) @db.Uuid
+  R14Id             String   @id @default(uuid()) @db.Uuid
   R14Nom            String
   R14Activ          Boolean
-  R14Coop_id        String          @db.Uuid
-  R14Actualizado_en DateTime        @updatedAt
-  R14Creada_en      DateTime        @default(now())
+  R14Coop_id        String   @db.Uuid
+  R14Actualizado_en DateTime @updatedAt
+  R14Creada_en      DateTime @default(now())
 
-  cooperativa       R17Cooperativas @relation(fields: [R14Coop_id], references: [R17Id], onDelete: Cascade)
-  prestamos         R01Prestamo[]
-  productos         R13Producto[]
+  cooperativa R17Cooperativas @relation(fields: [R14Coop_id], references: [R17Id], onDelete: Cascade)
+  prestamos   R01Prestamo[]
+  productos   R13Producto[]
 }
 
 model R15EvaluacionFase4 {
-  R15Id     String      @id @default(uuid()) @db.Uuid
-  R15P_num  String      @db.Char(8)
-  R15E_id   String      @db.Uuid
-  R15Res    ResFaseII  
+  R15Id    String    @id @default(uuid()) @db.Uuid
+  R15P_num String    @db.Char(8)
+  R15E_id  String    @db.Uuid
+  R15Res   ResFaseII
 
-  elemento  R04Elemento @relation(fields: [R15E_id], references: [R04Id], onDelete: Cascade)  
-  prestamo  R01Prestamo @relation(fields: [R15P_num], references: [R01NUM], onDelete: Cascade)
+  elemento R04Elemento @relation(fields: [R15E_id], references: [R04Id], onDelete: Cascade)
+  prestamo R01Prestamo @relation(fields: [R15P_num], references: [R01NUM], onDelete: Cascade)
 
   R12Usuario R12Usuario[]
 }
@@ -321,9 +346,9 @@ model R16EvaluacionResumenFase4 {
   R16CalF   Calificativo
   R16Obs    String
   R16FGlo   String
-  R16Ev_por String      @db.Uuid  
+  R16Ev_por String       @db.Uuid
 
-  prestamo  R01Prestamo  @relation(fields: [R16P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R16P_num], references: [R01NUM], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R16Ev_por], references: [R12Id])
 }
 
@@ -334,4 +359,50 @@ model R18LimitePrudencial {
   R18Creado_en      DateTime        @default(now())
   R18Actualizado_en DateTime        @updatedAt
   cooperativa       R17Cooperativas @relation(fields: [R18Coop_id], references: [R17Id], onDelete: Cascade)
+}
+
+model R19Movimientos {
+  R19Folio          Int      @id @default(autoincrement())
+  R19Cag            String
+  R19Nom            String
+  R19Figura         Figura
+  R19Suc_id         String   @db.Uuid
+  R19TipoMov        Movimiento
+  R19FMov           String
+  R19FRec           String
+  R19FRev           String
+  R19Est            String
+  R19Coop_id        String   @db.Uuid
+  R19Creado_en      DateTime @default(now())
+  R19Actualizado_en DateTime @updatedAt
+
+  sucursal    R11Sucursal     @relation(fields: [R19Suc_id], references: [R11Id])
+  cooperativa R17Cooperativas @relation(fields: [R19Coop_id], references: [R17Id], onDelete: Cascade)
+
+  evaluacionFase1 R20EvaluacionFase1Sisconcap[]
+
+  evaluacionResumenFase1 R21EvaluacionResumenFase1?
+}
+
+model R20EvaluacionFase1Sisconcap {
+  R20Id    String   @id @default(uuid()) @db.Uuid
+  R20Folio Int
+  R20E_id  String   @db.Uuid
+  R20Res   ResFaseI @default(NA)
+
+  movimiento R19Movimientos @relation(fields: [R20Folio], references: [R19Folio], onDelete: Cascade)
+}
+
+model R21EvaluacionResumenFase1 {
+  R21Folio   Int          @id
+  R21Ha      Int
+  R21Rc      Int
+  R21Cal     Calificativo
+  R21Obs     String
+  R21Ejvo_id String       @db.Uuid
+  R21SP_id   String       @db.Uuid
+
+  movimiento  R19Movimientos @relation(fields: [R21Folio], references: [R19Folio], onDelete: Cascade)
+  supervisor  R12Usuario      @relation("Supervisor", fields: [R21SP_id], references: [R12Id])
+  ejecutivo   R12Usuario      @relation("Ejecutivo", fields: [R21Ejvo_id], references: [R12Id])
 }
