@@ -291,6 +291,8 @@ model R12Usuario {
   evaluacionResumenFase1Supervisor R21EvaluacionResumenFase1[] @relation("Supervisor")
 
   evaluacionResumenFase1Ejecutivo R21EvaluacionResumenFase1[] @relation("Ejecutivo")
+
+  evaluacionResumenFase2Supervisor R23EvaluacionResumenFase2[] @relation("Supervisor")
 }
 
 model R13Producto {
@@ -380,8 +382,10 @@ model R19Movimientos {
   cooperativa R17Cooperativas @relation(fields: [R19Coop_id], references: [R17Id], onDelete: Cascade)
 
   evaluacionFase1 R20EvaluacionFase1Sisconcap[]
+  evaluacionFase2 R22EvaluacionFase2Sisconcap[]
 
   evaluacionResumenFase1 R21EvaluacionResumenFase1?
+  evaluacionResumenFase2 R23EvaluacionResumenFase2?
 }
 
 model R20EvaluacionFase1Sisconcap {
@@ -405,4 +409,28 @@ model R21EvaluacionResumenFase1 {
   movimiento  R19Movimientos @relation(fields: [R21Folio], references: [R19Folio], onDelete: Cascade)
   supervisor  R12Usuario      @relation("Supervisor", fields: [R21SP_id], references: [R12Id])
   ejecutivo   R12Usuario      @relation("Ejecutivo", fields: [R21Ejvo_id], references: [R12Id])
+}
+
+
+model R22EvaluacionFase2Sisconcap {
+  R22Id    String   @id @default(uuid()) @db.Uuid
+  R22Folio Int
+  R22E_id  String   @db.Uuid
+  R22Res   ResFaseII @default(NA)
+
+  movimiento R19Movimientos @relation(fields: [R22Folio], references: [R19Folio], onDelete: Cascade)
+}
+
+model R23EvaluacionResumenFase2 {
+  R23Folio   Int          @id
+  R23Solv    Int
+  R23PSolv   Int
+  R23Rc      Int
+  R23Obs     String
+  R23Cal     Calificativo
+  R23FSeg    String
+  R23SP_id   String       @db.Uuid
+
+  movimiento  R19Movimientos @relation(fields: [R23Folio], references: [R19Folio], onDelete: Cascade)
+  supervisor  R12Usuario      @relation("Supervisor", fields: [R23SP_id], references: [R12Id])
 }
