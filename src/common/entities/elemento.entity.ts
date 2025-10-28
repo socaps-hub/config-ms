@@ -16,6 +16,9 @@ export class Elemento {
   @Field( () => String)
   R04Imp: String
 
+  @Field( () => Int)
+  R04Pond: number;
+
   @Field(() => GraphQLISODateTime, { nullable: true })
   R04Creado_en?: Date;
 

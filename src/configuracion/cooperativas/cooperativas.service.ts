@@ -5,6 +5,7 @@ import { RpcException } from '@nestjs/microservices';
 import { CreateCooperativaInput } from './dto/inputs/create-cooperativa.input';
 import { UpdateCooperativaInput } from './dto/inputs/update-cooperativa.input';
 import { ValidRoles } from 'src/common/enums/valid-roles.enum';
+import { CooperativaRadiografiaStatus } from './dto/outputs/cooperativa-radiografia-status.output';
 
 @Injectable()
 export class CooperativasService extends PrismaClient implements OnModuleInit {
@@ -457,5 +458,29 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
           }
         }
       });
+  }
+
+  async getCooperativasRadiografiaCreditoStatus(): Promise<CooperativaRadiografiaStatus[]> {
+    const cooperativas = await this.r17Cooperativas.findMany({
+      select: {
+        R17Id: true,
+        R17Nom: true,
+      },
+    });
+
+    // Obtener todas las cargas activas agrupadas por cooperativa
+    const cargas = await this.c01ControlCarga.findMany({
+      select: { C01CooperativaCodigo: true },
+      distinct: ['C01CooperativaCodigo'],
+    });
+
+    const cooperativasConCarga = new Set(cargas.map(c => c.C01CooperativaCodigo));
+
+    // Armar respuesta fusionando ambos resultados
+    return cooperativas.map(c => ({
+      id: c.R17Id,
+      nombre: c.R17Nom,
+      tieneCarga: cooperativasConCarga.has(c.R17Id), // usa id si lo guardas así
+    }));
   }
 }

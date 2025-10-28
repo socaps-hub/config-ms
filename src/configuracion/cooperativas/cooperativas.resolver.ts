@@ -6,6 +6,7 @@ import { CreateCooperativaInput } from './dto/inputs/create-cooperativa.input';
 import { UpdateCooperativaInput } from './dto/inputs/update-cooperativa.input';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { ValidRolesArgs } from '../usuarios/dto/args/roles.arg';
+import { CooperativaRadiografiaStatus } from './dto/outputs/cooperativa-radiografia-status.output';
 
 @Resolver(() => Cooperativa)
 @UseGuards(AuthGraphQLGuard)
@@ -60,5 +61,10 @@ export class CooperativasResolver {
     @Args('id', { type: () => String }, ParseUUIDPipe) id: string
   ) {
     return this.cooperativasService.desactivate(id);
+  }
+
+  @Query(() => [CooperativaRadiografiaStatus], { name: 'cooperativasRadiografiaCreditoStatus' })
+  async getCooperativasRadiografiaCreditoStatus() {
+    return this.cooperativasService.getCooperativasRadiografiaCreditoStatus();
   }
 }

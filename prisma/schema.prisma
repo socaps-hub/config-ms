@@ -42,6 +42,7 @@ enum Resolucion {
 enum GrupoTipo {
   SISCONCRE
   SISCONCAP
+  ACREDITO
 }
 
 enum Figura {
@@ -54,6 +55,13 @@ enum Movimiento {
   ALTA
   APERTURA
   BAJA
+}
+
+// RADIOGRAFIAS
+enum CargaEstado {
+  CARGADO
+  PROCESADO
+  ANULADO
 }
 
 model R17Cooperativas {
@@ -146,6 +154,7 @@ model R04Elemento {
   R04R_id           String   @db.Uuid
   R04Nom            String
   R04Imp            String
+  R04Pond           Int      @default(0)
   R04Actualizado_en DateTime @updatedAt
   R04Creado_en      DateTime @default(now())
 
@@ -366,19 +375,19 @@ model R18LimitePrudencial {
 }
 
 model R19Movimientos {
-  R19Folio          Int      @id @default(autoincrement())
+  R19Folio          Int        @id @default(autoincrement())
   R19Cag            String
   R19Nom            String
   R19Figura         Figura
-  R19Suc_id         String   @db.Uuid
+  R19Suc_id         String     @db.Uuid
   R19TipoMov        Movimiento
   R19FMov           String
   R19FRec           String
   R19FRev           String
   R19Est            String
-  R19Coop_id        String   @db.Uuid
-  R19Creado_en      DateTime @default(now())
-  R19Actualizado_en DateTime @updatedAt
+  R19Coop_id        String     @db.Uuid
+  R19Creado_en      DateTime   @default(now())
+  R19Actualizado_en DateTime   @updatedAt
 
   sucursal    R11Sucursal     @relation(fields: [R19Suc_id], references: [R11Id])
   cooperativa R17Cooperativas @relation(fields: [R19Coop_id], references: [R17Id], onDelete: Cascade)
@@ -410,54 +419,172 @@ model R21EvaluacionResumenFase1 {
   R21Ejvo_id String       @db.Uuid
   R21SP_id   String       @db.Uuid
 
-  movimiento  R19Movimientos @relation(fields: [R21Folio], references: [R19Folio], onDelete: Cascade)
-  supervisor  R12Usuario      @relation("Supervisor", fields: [R21SP_id], references: [R12Id])
-  ejecutivo   R12Usuario      @relation("Ejecutivo", fields: [R21Ejvo_id], references: [R12Id])
+  movimiento R19Movimientos @relation(fields: [R21Folio], references: [R19Folio], onDelete: Cascade)
+  supervisor R12Usuario     @relation("Supervisor", fields: [R21SP_id], references: [R12Id])
+  ejecutivo  R12Usuario     @relation("Ejecutivo", fields: [R21Ejvo_id], references: [R12Id])
 }
 
-
 model R22EvaluacionFase2Sisconcap {
-  R22Id    String   @id @default(uuid()) @db.Uuid
+  R22Id    String    @id @default(uuid()) @db.Uuid
   R22Folio Int
-  R22E_id  String   @db.Uuid
+  R22E_id  String    @db.Uuid
   R22Res   ResFaseII @default(NA)
 
   movimiento R19Movimientos @relation(fields: [R22Folio], references: [R19Folio], onDelete: Cascade)
 }
 
 model R23EvaluacionResumenFase2 {
-  R23Folio   Int          @id
-  R23Solv    Int
-  R23PSolv   Int
-  R23Rc      Int
-  R23Obs     String
-  R23Cal     Calificativo
-  R23FSeg    String
-  R23SP_id   String       @db.Uuid
+  R23Folio Int          @id
+  R23Solv  Int
+  R23PSolv Int
+  R23Rc    Int
+  R23Obs   String
+  R23Cal   Calificativo
+  R23FSeg  String
+  R23SP_id String       @db.Uuid
 
-  movimiento  R19Movimientos @relation(fields: [R23Folio], references: [R19Folio], onDelete: Cascade)
-  supervisor  R12Usuario      @relation("Supervisor", fields: [R23SP_id], references: [R12Id])
+  movimiento R19Movimientos @relation(fields: [R23Folio], references: [R19Folio], onDelete: Cascade)
+  supervisor R12Usuario     @relation("Supervisor", fields: [R23SP_id], references: [R12Id])
 }
 
 model R24EvaluacionFase3Sisconcap {
-  R24Id    String   @id @default(uuid()) @db.Uuid
+  R24Id    String    @id @default(uuid()) @db.Uuid
   R24Folio Int
-  R24E_id  String   @db.Uuid
+  R24E_id  String    @db.Uuid
   R24Res   ResFaseII @default(NA)
 
   movimiento R19Movimientos @relation(fields: [R24Folio], references: [R19Folio], onDelete: Cascade)
 }
 
 model R25EvaluacionResumenFase3 {
-  R25Folio   Int          @id
-  R25Solv    Int
-  R25PSolv   Int
-  R25Rc      Int
-  R25Obs     String
-  R25Cal     Calificativo
-  R25FSegG   String
-  R25SP_id   String       @db.Uuid
+  R25Folio Int          @id
+  R25Solv  Int
+  R25PSolv Int
+  R25Rc    Int
+  R25Obs   String
+  R25Cal   Calificativo
+  R25FSegG String
+  R25SP_id String       @db.Uuid
 
-  movimiento  R19Movimientos @relation(fields: [R25Folio], references: [R19Folio], onDelete: Cascade)
-  supervisor  R12Usuario      @relation("Supervisor", fields: [R25SP_id], references: [R12Id])
+  movimiento R19Movimientos @relation(fields: [R25Folio], references: [R19Folio], onDelete: Cascade)
+  supervisor R12Usuario     @relation("Supervisor", fields: [R25SP_id], references: [R12Id])
+}
+
+// CONTROL DE CARGA DE RADIOGRAFIA
+model C01ControlCarga {
+  C01Id                Int      @id @default(autoincrement())
+  C01CooperativaCodigo String   @unique
+  C01Archivo           String?
+  C01FechaCarga        DateTime @default(now())
+  C01PeriodoMes        Int
+  C01PeriodoAnio       Int
+
+  creditos RA01Credito[]
+
+  @@index([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
+}
+
+// RADIOGRAFIA DE CRÉDITO
+model RA01Credito {
+  RA01Folio                                           Int     @id @default(autoincrement())
+  RA01NumeroDeCredito                                 String // Numero de Crédito
+  RA01Tipo                                            String // Tipo
+  RA01Categoria                                       String // Categoria                  
+  RA01Finalidad                                       String // Finalidad                  
+  RA01DestinoAgropecuario                             String // Destino Agropecuario
+  RA01FormaPago                                       String // Forma Pago                 
+  RA01FEntrega                                        String // F/Entrega                  
+  RA01FVencimiento                                    String // F.Vencimiento              
+  RA01PeriodicidadCapital                             Decimal @db.Decimal(18, 2) // Periodicidad Capital       
+  RA01PeriodicidadIntereses                           Decimal @db.Decimal(18, 2) // Periodicidad Intereses     
+  RA01Plazo                                           Int // Plazo                      
+  RA01Abonos                                          String // Abonos                     
+  RA01CEntregada                                      Int // C.Entregada                
+  RA01Microcredito                                    Decimal @db.Decimal(18, 2) // MicroCredito               
+  RA01TipoDeAutorizacion                              String // Tipo de Autorizacion       
+  RA01UsrAutorizacion                                 String // Usr Autorizacion           
+  RA01UsrSolicitud                                    String // Usr. Solicitud             
+  RA01Sucursal                                        String // Sucursal                   
+  RA01TasaOrdinaria                                   Decimal @db.Decimal(18, 2) // Tasa Ordinaria             
+  RA01TasaMoratoria                                   Decimal @db.Decimal(18, 2) // Tasa Moratoria             
+  RA01EstimacionCapital                               Decimal @db.Decimal(18, 2) // Estimacion Capital           
+  RA01EstimacionInteres                               Decimal @db.Decimal(18, 2) // Estimacion Interes           
+  RA01EstimacionAdicionalPorInteresesEnCarteraVencida String // Estimacion Adicional por intereses  en cartera vencida        
+  RA01OrdenoEprc                                      String // Ordeno EPRC                  
+  RA01TotalEstimado                                   Decimal @db.Decimal(18, 2) // Total Estimado               
+  RA01CalificacionParteCubierta                       Decimal @db.Decimal(18, 2) // Calificacion parte cubierta  
+  RA01CalificacionParteExpuesta                       Decimal @db.Decimal(18, 2) // Calificacion parte expuesta  
+  RA01ParteCubierta                                   String // Parte Cubierta               
+  RA01ParteExpuesta                                   Decimal @db.Decimal(18, 2) // Parte Expuesta               
+  RA01MontoEstPartCubierta                            Decimal @db.Decimal(18, 2) // Monto Est.Part.Cubierta      
+  RA01MontoEstPartExpuesta                            Decimal @db.Decimal(18, 2) // Monto Est.Part.Expuesta      
+  RA01TipoDeCartera                                   String // Tipo de Cartera              
+  RA01GarantiaHipotecaria                             Decimal @db.Decimal(18, 2) // Garantia Hipotecaria
+  RA01Formalizada                                     String // Formalizada                  
+  RA01LibreGravamen                                   String // Libre Gravamen               
+  RA01FavorSociedad                                   String // Favor Sociedad               
+  RA01AvaluoActuallizado                              String // Avaluo Actuallizado          
+  RA01DepositoGarantia                                Decimal @db.Decimal(18, 2) // Deposito Garantia            
+  RA01GarantiaLiquida                                 Decimal @db.Decimal(18, 2) // Garantia Liquida             
+  RA01CreditoRedescontado                             String // Credito Redescontado          
+  RA01InstitucionFuenteRecursos                       String // Institucion fuente recursos   
+  RA01PorcentajeGarantia                              Decimal @db.Decimal(18, 2) // Porcentaje Garantia           
+  RA01GarantiaPrendaria                               Decimal @db.Decimal(18, 2) // Garantia Prendaria            
+  RA01NumeroCag                                       String // Numero CAG                     
+  RA01NumeroDeSocio                                   String // Numero de socio
+  RA01Nombre                                          String // Nombre                        
+  RA01RazonSocial                                     String // Razon Social                         
+  RA01Sexo                                            String // Sexo                          
+  RA01FIngreso                                        String // F.Ingreso                     
+  RA01FNacimiento                                     String // F.Nacimiento                  
+  RA01SocioRelacionado                                String // Socio Relacionado             
+  RA01Calle                                           String // Calle                         
+  RA01NoCivico                                        String // No. Civico                    
+  RA01Colonia                                         String // Colonia                       
+  RA01Ciudad                                          String // Ciudad                        
+  RA01Municipio                                       String // Municipio                     
+  RA01Estado                                          String // Estado                        
+  RA01CodPostal                                       String // Cod.Postal                    
+  RA01Telefono                                        String // Telefono                      
+  RA01Marginada                                       String // Marginada                     
+  RA01GradoEstudios                                   String // Grado Estudios                   
+  RA01Ocupacion                                       String // Ocupacion                        
+  RA01Curp                                            String // CURP                             
+  RA01Rfc                                             String // RFC                              
+  RA01Riesgo                                          String // Riesgo
+  RA01Ingresos                                        Decimal @db.Decimal(18, 2) // Ingresos                         
+  RA01TendenciaGastos                                 Decimal @db.Decimal(18, 2) // Tendencia Gastos                 
+  RA01MontoHaberes                                    Decimal @db.Decimal(18, 2) // Monto Haberes                    
+  RA01CapitalCobrado                                  Decimal @db.Decimal(18, 2) // Capital Cobrado                  
+  RA01CapitalVencido                                  Decimal @db.Decimal(18, 2) // Capital Vencido                  
+  RA01AbonosVencidos                                  Int // Abonos Vencidos                  
+  RA01DiasMora                                        Int // Dias Mora                        
+  RA01DiasParaVencer                                  Int // Dias para Vencer                 
+  RA01FechaUltimoPagoCapital                          String // Fecha Ultimo Pago Capital        
+  RA01MontoUltPagoCapital                             Decimal @db.Decimal(18, 2) // Monto Ult Pago Capital           
+  RA01FechaUltimoPagoInteres                          String // Fecha Ultimo Pago Interes        
+  RA01MontoUltPagoInteres                             Decimal @db.Decimal(18, 2) // Monto Ult Pago Interes           
+  RA01FechaCambioSituacion                            String // Fecha Cambio Situacion           
+  RA01InteresMoratorio                                Decimal @db.Decimal(18, 2) // Interes Moratorio                
+  RA01InteresMoratorioCobrado                         Decimal @db.Decimal(18, 2) // Interes Moratorio Cobrado        
+  RA01InteresMoratorioCarteraVe                       Decimal @db.Decimal(18, 2) // Interes Moratorio Cartera Ve     
+  RA01InteresMoratorioCtaOrden                        Decimal @db.Decimal(18, 2) // Interes Moratorio Cta Orden      
+  RA01InteresNormal                                   Decimal @db.Decimal(18, 2) // Interes Normal                   
+  RA01InteresNormalCobrado                            Decimal @db.Decimal(18, 2) // Interes Normal Cobrado           
+  RA01InteresNormalCarteraVe                          Decimal @db.Decimal(18, 2) // Interes Normal Cartera Ve        
+  RA01InteresNormalCtaOrden                           Decimal @db.Decimal(18, 2) // Interes Normal Cta Orden         
+  RA01InteresProximoAbono                             Decimal @db.Decimal(18, 2) // Interes Proximo Abono            
+  RA01FechaProximoAbono                               String // Fecha Proximo Abono              
+  RA01SaldoCapitalCartVig                             Decimal @db.Decimal(18, 2) // Saldo Capital Cart.Vig           
+  RA01SaldoCapitalCartVen                             Decimal @db.Decimal(18, 2) // Saldo Capital Cart.Ven           
+  RA01TipoDeCobranza                                  String // Tipo de Cobranza
+  RA01VigenteOVencido                                 String // Vigente o Vencido                
+  RA01FPrimeramortvencida                             String // F.PrimerAmortVencida             
+  RA01FConsultaburo                                   String // F/ConsultaBuro                   
+  RA01SituacionDelCredito                             String // Situacion del Credito            
+  RA01TotalCartera                                    Decimal @db.Decimal(18, 2) // Total Cartera
+
+  // Relación al lote/carga
+  RA01ControlId Int
+  control       C01ControlCarga @relation(fields: [RA01ControlId], references: [C01Id], onDelete: Cascade)
 }

@@ -59,5 +59,8 @@ export class CooperativasHandler {
         return this.cooperativasService.desactivate(id)
     }
 
-    // Puedes agregar create, update, remove si se implementan más adelante.
+    @MessagePattern('config.cooperativas.getCooperativasRadiografiaCreditoStatus')
+    handleGetCooperativasRadiografiaCreditoStatus() {
+        return this.cooperativasService.getCooperativasRadiografiaCreditoStatus();
+    }
 }
