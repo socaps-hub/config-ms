@@ -7,6 +7,23 @@ import { ExcelService } from 'src/common/excel/services/excel.service';
 import { ExcelUtils } from 'src/common/excel/utils/excel.utils';
 import { CreateRadiografiaCargaArgs } from './dto/args/create-radiografia-carga.arg';
 
+const MESES_MAP: Record<string, number> = {
+  'enero': 1,
+  'febrero': 2,
+  'marzo': 3,
+  'abril': 4,
+  'mayo': 5,
+  'junio': 6,
+  'julio': 7,
+  'agosto': 8,
+  'septiembre': 9,
+  'setiembre': 9, // por compatibilidad
+  'octubre': 10,
+  'noviembre': 11,
+  'diciembre': 12,
+};
+
+
 @Injectable()
 export class RadiografiaService extends PrismaClient implements OnModuleInit {
 
@@ -160,6 +177,24 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
         creditos: CreateRA01CreditoInput[],
     ) {
         try {
+            
+            const { periodoMes, periodoAnio, nombreMes } = this._getNumMesAndYearFromFileName(archivo)
+
+            // 🔹 Validar si ya existe carga para ese periodo
+            const existeCarga = await this.c01ControlCarga.findFirst({
+            where: {
+                C01CooperativaCodigo: cooperativaCodigo,
+                C01PeriodoMes: periodoMes,
+                C01PeriodoAnio: periodoAnio,
+            },
+            });
+
+            if (existeCarga) {
+                throw new Error(
+                    `Ya existe una carga para ${cooperativaCodigo} en ${nombreMes} (${periodoMes}/${periodoAnio}).`,
+                );
+            }
+
             return await this.$transaction(async (tx) => {
                 // 1️⃣ Crear registro de control de carga
                 const control = await tx.c01ControlCarga.create({
@@ -167,8 +202,8 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
                         C01CooperativaCodigo: cooperativaCodigo,
                         C01Archivo: archivo,
                         C01FechaCarga: new Date(),
-                        C01PeriodoMes: new Date().getMonth() + 1,
-                        C01PeriodoAnio: new Date().getFullYear(),
+                        C01PeriodoMes: periodoMes,
+                        C01PeriodoAnio: periodoAnio,
                     },
                 });
 
@@ -206,10 +241,10 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
                     totalRegistros: result.count,
                     controlId,
                 };
-            });
+            }, { timeout: 30000 });
         } catch (error) {
             this._logger.error(`❌ Error en carga masiva de radiografía: ${error.message}`);
-            throw error;
+            throw `❌ Error en carga masiva de radiografía: ${error.message}`;
         }
     }
 
@@ -228,6 +263,21 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
             n(c.RA01SaldoCapitalCartVig) +
             n(c.RA01SaldoCapitalCartVen)
         );
+    }
+
+    private _getNumMesAndYearFromFileName(archivo: string) {
+        // 🔹 Extraer el nombre del mes del archivo (e.g. “...-Febrero.xlsx”)
+        const nombreArchivoSinExtension = archivo.replace('.xlsx', '');
+        const partes = nombreArchivoSinExtension.split('-');
+        const nombreMes = partes[partes.length - 1].trim().toLowerCase();
+
+        // 🔹 Determinar número del mes y año actual
+        const periodoMes = MESES_MAP[nombreMes] ?? (new Date().getMonth() + 1);
+        const periodoAnio = new Date().getFullYear();
+
+        this._logger.log(`📅 Mes detectado: ${nombreMes} → ${periodoMes}`);
+
+        return { periodoMes, periodoAnio, nombreMes }
     }
 
 }

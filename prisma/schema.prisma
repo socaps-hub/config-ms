@@ -80,6 +80,8 @@ model R17Cooperativas {
   limitePrudencial R18LimitePrudencial[]
 
   movimientos R19Movimientos[]
+
+  A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 }
 
 model R01Prestamo {
@@ -263,7 +265,8 @@ model R11Sucursal {
   cooperativa R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id], onDelete: Cascade)
   usuarios    R12Usuario[]
 
-  movimientos R19Movimientos[]
+  movimientos                R19Movimientos[]
+  A02MuestraCreditoSeleccion A02MuestraCreditoSeleccion[]
 }
 
 model R12Usuario {
@@ -304,6 +307,8 @@ model R12Usuario {
   evaluacionResumenFase2Supervisor R23EvaluacionResumenFase2[] @relation("Supervisor")
 
   evaluacionResumenFase3Supervisor R25EvaluacionResumenFase3[] @relation("Supervisor")
+
+  A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 }
 
 model R13Producto {
@@ -470,10 +475,11 @@ model R25EvaluacionResumenFase3 {
   supervisor R12Usuario     @relation("Supervisor", fields: [R25SP_id], references: [R12Id])
 }
 
+// * RADIOGRAFIAS
 // CONTROL DE CARGA DE RADIOGRAFIA
 model C01ControlCarga {
   C01Id                Int      @id @default(autoincrement())
-  C01CooperativaCodigo String   @unique
+  C01CooperativaCodigo String
   C01Archivo           String?
   C01FechaCarga        DateTime @default(now())
   C01PeriodoMes        Int
@@ -481,6 +487,7 @@ model C01ControlCarga {
 
   creditos RA01Credito[]
 
+  @@unique([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
   @@index([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
 }
 
@@ -587,4 +594,77 @@ model RA01Credito {
   // Relación al lote/carga
   RA01ControlId Int
   control       C01ControlCarga @relation(fields: [RA01ControlId], references: [C01Id], onDelete: Cascade)
+
+  A02MuestraCreditoSeleccion A02MuestraCreditoSeleccion[]
+}
+
+//* AUDITORIA
+// Crédito
+model A01MuestraSeleccionCredito {
+  A01Id            Int      @id @default(autoincrement())
+  A01FechaCreacion DateTime @default(now())
+
+  // Relación con el usuario que realizó la selección
+  A01UsuarioId String     @db.Uuid
+  usuario      R12Usuario @relation(fields: [A01UsuarioId], references: [R12Id])
+
+  // Relación con la cooperativa
+  A01CoopId   String          @db.Uuid
+  cooperativa R17Cooperativas @relation(fields: [A01CoopId], references: [R17Id])
+
+  // Parámetros de la muestra
+  A01MargenError    Float
+  A01NivelConfianza Float
+  A01FechaInicio    DateTime
+  A01FechaFinal     DateTime
+  A01TamanoMuestra  Int
+  A01TamanoUniverso Int
+
+  // Estado de la muestra
+  A01Finalizada Boolean @default(false)
+
+  // Relación 1:N con los créditos seleccionados
+  seleccionados A02MuestraCreditoSeleccion[]
+}
+
+model A02MuestraCreditoSeleccion {
+  A02Id        Int                        @id @default(autoincrement())
+  A02MuestraId Int
+  muestra      A01MuestraSeleccionCredito @relation(fields: [A02MuestraId], references: [A01Id], onDelete: Cascade)
+
+  // Relación con crédito original
+  A02CreditoFolio Int
+  credito         RA01Credito @relation(fields: [A02CreditoFolio], references: [RA01Folio])
+  A02Sucursal     String      @db.Uuid
+  sucursal        R11Sucursal @relation(fields: [A02Sucursal], references: [R11Id])
+
+  // ───────────────────────────────
+  // Información desnormalizada del crédito
+  // ───────────────────────────────
+  A02CAG                   String?
+  A02Nombre                String?
+  A02Relacion              String?
+  A02Prestamo              String?
+  A02Clasificacion         String?
+  A02Producto              String?
+  A02Finalidad             String?
+  A02DestinoAgro           String?
+  A02TipoPago              String?
+  A02FechaOtorgamiento     String? // ISO
+  A02FechaVencimiento      String? // ISO
+  A02FechaConsultaBuro     String? // ISO
+  A02FechaEntrega          String? // ISO
+  A02PlazoDias             Int?
+  A02TasaInteresNormal     Decimal? @db.Decimal(18, 2)
+  A02CantidadEntregada     Int?
+  A02DeudaTotal            Decimal? @db.Decimal(18, 2)
+  A02GarantiaLiquida       Decimal? @db.Decimal(18, 2)
+  A02GarantiaPrendaria     Decimal? @db.Decimal(18, 2)
+  A02GarantiaHipotecaria   Decimal? @db.Decimal(18, 2)
+  A02TipoAutorizacion      String?
+  A02UsrAutorizacionNi     String?
+  A02UsrAutorizacionNombre String?
+
+  // 🔹 Campo calculado: Tipo de crédito (Aut / Ord)
+  A02TipoCredito String? // “Aut.” o “Ord.”
 }
