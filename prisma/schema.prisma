@@ -34,6 +34,13 @@ enum Calificativo {
   PENDIENTE
 }
 
+enum CalificativoB {
+  ACEPTABLE
+  COMPLETO
+  GRAVE
+  PENDIENTE
+}
+
 enum Resolucion {
   DEVUELTA
   PASA_COMITE
@@ -309,6 +316,10 @@ model R12Usuario {
   evaluacionResumenFase3Supervisor R25EvaluacionResumenFase3[] @relation("Supervisor")
 
   A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
+
+  auditorResumenF1 A04EvaluacionResumenFase1[] @relation("Auditor")
+
+  responsableResumenF1 A04EvaluacionResumenFase1[] @relation("Responsable")
 }
 
 model R13Producto {
@@ -667,4 +678,41 @@ model A02MuestraCreditoSeleccion {
 
   // 🔹 Campo calculado: Tipo de crédito (Aut / Ord)
   A02TipoCredito String? // “Aut.” o “Ord.”
+
+  A02Estado String @default("No revisado")
+
+  evaluacionRevisionF1 A03EvaluacionFase1AuditoriaC[]
+
+  resumenRevisionF1 A04EvaluacionResumenFase1?
+}
+
+// Revision FASE I
+model A03EvaluacionFase1AuditoriaC {
+  A03Id   String   @id @default(uuid()) @db.Uuid
+  A03CSId Int
+  A03E_id String   @db.Uuid
+  A03Res  ResFaseI @default(NA)
+
+  creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A03CSId], references: [A02Id], onDelete: Cascade)
+}
+
+model A04EvaluacionResumenFase1 {
+  A04Id     Int           @id
+  A04PSAut  String
+  A04Excep  String
+  A04Ha     Int
+  A04PRes   Int
+  A04MonR   Int
+  A04CalA   Calificativo
+  A04CalB   CalificativoB
+  A04Obs    String
+  A04Comp   String
+  A04FPlzo  String
+  A04Resp   String        @db.Uuid
+  A04Aud_id String        @db.Uuid
+  A04FRev   String
+
+  creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A04Id], references: [A02Id], onDelete: Cascade)
+  auditor          R12Usuario                 @relation("Auditor", fields: [A04Aud_id], references: [R12Id])
+  responsable      R12Usuario                 @relation("Responsable", fields: [A04Resp], references: [R12Id])
 }
