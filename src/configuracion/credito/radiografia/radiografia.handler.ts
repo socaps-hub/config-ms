@@ -37,7 +37,7 @@ export class RadiografiaHandler {
     ) {
         console.log({key, cooperativaCodigo});
         
-        return await this._service.parseFileAndBuildCreateRA01CreditoInput(key, cooperativaCodigo);
+        await this._service.parseFileAndBuildCreateRA01CreditoInput(key, cooperativaCodigo);
     }
 
 
