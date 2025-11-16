@@ -1,5 +1,5 @@
 import { Controller, Logger } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
+import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
 import { RadiografiaService } from "./radiografia.service";
 import { CreateRadiografiaCargaArgs } from "./dto/args/create-radiografia-carga.arg";
 import { FileUpload } from "graphql-upload-ts";
@@ -31,7 +31,7 @@ export class RadiografiaHandler {
     //     return await this._service.parseFileAndBuildCreateRA01CreditoInput(path, cooperativaCodigo);
     // }
 
-    @MessagePattern('config.radiografias.credito.upload')
+    @EventPattern('config.radiografias.credito.upload')
     async handleCrearCargaMasivaRadiografiaCredito(
         @Payload() { key, cooperativaCodigo }: { key: string; cooperativaCodigo: string },
     ) {
