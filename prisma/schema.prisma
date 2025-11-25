@@ -41,6 +41,11 @@ enum CalificativoB {
   PENDIENTE
 }
 
+enum AResultado {
+  NO_SOLVENTADO
+  SOLVENTADO
+}
+
 enum Resolucion {
   DEVUELTA
   PASA_COMITE
@@ -318,8 +323,9 @@ model R12Usuario {
   A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 
   auditorResumenF1 A04EvaluacionResumenFase1[] @relation("Auditor")
+  responsableResumenF1       A04EvaluacionResumenFase1[] @relation("Responsable")
 
-  responsableResumenF1 A04EvaluacionResumenFase1[] @relation("Responsable")
+  auditorResumenF2 A06EvaluacionResumenFase2[] @relation("Auditor")
 }
 
 model R13Producto {
@@ -681,9 +687,11 @@ model A02MuestraCreditoSeleccion {
 
   A02Estado String @default("No revisado")
 
+  resumenRevisionF1             A04EvaluacionResumenFase1?
   evaluacionRevisionF1 A03EvaluacionFase1AuditoriaC[]
 
-  resumenRevisionF1 A04EvaluacionResumenFase1?
+  resumenRevisionF2    A06EvaluacionResumenFase2?
+  evaluacionRevisionF2 A05EvaluacionFase2AuditoriaC[]
 }
 
 // Revision FASE I
@@ -715,4 +723,27 @@ model A04EvaluacionResumenFase1 {
   creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A04Id], references: [A02Id], onDelete: Cascade)
   auditor          R12Usuario                 @relation("Auditor", fields: [A04Aud_id], references: [R12Id])
   responsable      R12Usuario                 @relation("Responsable", fields: [A04Resp], references: [R12Id])
+}
+
+// SEGUIMIENTO FASE 2
+model A05EvaluacionFase2AuditoriaC {
+  A05Id   String    @id @default(uuid()) @db.Uuid
+  A05CSId Int
+  A05E_id String    @db.Uuid
+  A05Res  ResFaseII @default(NA)
+
+  creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A05CSId], references: [A02Id], onDelete: Cascade)
+}
+
+model A06EvaluacionResumenFase2 {
+  A06Id     Int        @id
+  A06Solv   Int
+  A06NSolv  Int
+  A06ARes   AResultado
+  A06Obs    String
+  A06Aud_id String     @db.Uuid
+  A06FSeg   String
+
+  creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A06Id], references: [A02Id], onDelete: Cascade)
+  auditor          R12Usuario                 @relation("Auditor", fields: [A06Aud_id], references: [R12Id])
 }
