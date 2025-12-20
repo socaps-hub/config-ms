@@ -180,6 +180,9 @@ model R04Elemento {
   evaluacionesF2 R07EvaluacionFase2[]
   evaluacionesF3 R09EvaluacionFase3[]
   evaluacionesF4 R15EvaluacionFase4[]
+
+  aCreditoEvaluacionesF1 A03EvaluacionFase1AuditoriaC[]
+  aCreditoEvaluacionesF2 A05EvaluacionFase2AuditoriaC[]
 }
 
 model R05EvaluacionFase1 {
@@ -705,6 +708,7 @@ model A03EvaluacionFase1AuditoriaC {
   A03Res  ResFaseI @default(NA)
 
   creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A03CSId], references: [A02Id], onDelete: Cascade)
+  elemento R04Elemento @relation(fields: [A03E_id], references: [R04Id], onDelete: Cascade)
 }
 
 model A04EvaluacionResumenFase1 {
@@ -736,6 +740,7 @@ model A05EvaluacionFase2AuditoriaC {
   A05Res  ResFaseII @default(NA)
 
   creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A05CSId], references: [A02Id], onDelete: Cascade)
+  elemento R04Elemento @relation(fields: [A05E_id], references: [R04Id], onDelete: Cascade)
 }
 
 model A06EvaluacionResumenFase2 {
@@ -770,4 +775,4 @@ model M01ControlMigracion {
   @@index([M01Fecha])
 }
 
-// TODO - pendiente npx prisma db push en produccion (neon tech)
+// TODO - pendiente npx prisma db push en produccion AWS
