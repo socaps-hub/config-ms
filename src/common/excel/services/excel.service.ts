@@ -132,4 +132,45 @@ export class ExcelService {
       throw error;
     }
   }
+
+  /**
+   * 📊 Construye un archivo Excel (Buffer) a partir de un arreglo de objetos
+   */
+  buildExcelBuffer(params: {
+    rows: any[];
+    sheetName?: string;
+    headers?: string[];
+    columnWidths?: number[];
+  }): Buffer {
+
+    const {
+      rows,
+      sheetName = 'Sheet1',
+      headers,
+      columnWidths,
+    } = params;
+
+    if (!rows || rows.length === 0) {
+      throw new Error('No hay datos para generar el archivo Excel.');
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      rows,
+      headers ? { header: headers } : undefined
+    );
+
+    // Ajuste de ancho de columnas (opcional)
+    if (columnWidths?.length) {
+      worksheet['!cols'] = columnWidths.map(w => ({ wch: w }));
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    return XLSX.write(workbook, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    });
+  }
+
 }
