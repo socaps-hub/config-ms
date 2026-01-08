@@ -7,6 +7,7 @@ import { ProductosModule } from './productos/productos.module';
 import { CreditoModule } from './credito/credito.module';
 import { ControlCargaRadiografiasModule } from './control-carga-radiografias/control-carga-radiografias.module';
 import { MigracionModule } from './migracion/migracion.module';
+import { ModulosModule } from './modulos/modulos.module';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { MigracionModule } from './migracion/migracion.module';
     UsuariosModule, 
     ProductosModule, 
     CreditoModule, 
-    ControlCargaRadiografiasModule, MigracionModule,
+    ControlCargaRadiografiasModule, MigracionModule, ModulosModule,
   ]
 })
 export class ConfiguracionModule {}

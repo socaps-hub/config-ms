@@ -96,6 +96,7 @@ model R17Cooperativas {
   A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 
   migraciones M01ControlMigracion[]
+  modulos     C02CooperativaModulo[]
 }
 
 model R01Prestamo {
@@ -171,7 +172,7 @@ model R04Elemento {
   R04Nom            String
   R04Imp            String
   R04Pond           Int      @default(0)
-  R04Codigo         String?  
+  R04Codigo         String?
   R04Actualizado_en DateTime @updatedAt
   R04Creado_en      DateTime @default(now())
 
@@ -328,8 +329,8 @@ model R12Usuario {
 
   A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 
-  auditorResumenF1 A04EvaluacionResumenFase1[] @relation("Auditor")
-  responsableResumenF1       A04EvaluacionResumenFase1[] @relation("Responsable")
+  auditorResumenF1     A04EvaluacionResumenFase1[] @relation("Auditor")
+  responsableResumenF1 A04EvaluacionResumenFase1[] @relation("Responsable")
 
   auditorResumenF2 A06EvaluacionResumenFase2[] @relation("Auditor")
 }
@@ -693,7 +694,7 @@ model A02MuestraCreditoSeleccion {
 
   A02Estado String @default("No revisado")
 
-  resumenRevisionF1             A04EvaluacionResumenFase1?
+  resumenRevisionF1    A04EvaluacionResumenFase1?
   evaluacionRevisionF1 A03EvaluacionFase1AuditoriaC[]
 
   resumenRevisionF2    A06EvaluacionResumenFase2?
@@ -708,7 +709,7 @@ model A03EvaluacionFase1AuditoriaC {
   A03Res  ResFaseI @default(NA)
 
   creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A03CSId], references: [A02Id], onDelete: Cascade)
-  elemento R04Elemento @relation(fields: [A03E_id], references: [R04Id], onDelete: Cascade)
+  elemento         R04Elemento                @relation(fields: [A03E_id], references: [R04Id], onDelete: Cascade)
 }
 
 model A04EvaluacionResumenFase1 {
@@ -740,7 +741,7 @@ model A05EvaluacionFase2AuditoriaC {
   A05Res  ResFaseII @default(NA)
 
   creditoSeleccion A02MuestraCreditoSeleccion @relation(fields: [A05CSId], references: [A02Id], onDelete: Cascade)
-  elemento R04Elemento @relation(fields: [A05E_id], references: [R04Id], onDelete: Cascade)
+  elemento         R04Elemento                @relation(fields: [A05E_id], references: [R04Id], onDelete: Cascade)
 }
 
 model A06EvaluacionResumenFase2 {
@@ -757,22 +758,94 @@ model A06EvaluacionResumenFase2 {
 }
 
 model M01ControlMigracion {
-  M01Id          Int        @id @default(autoincrement())
-  M01Coop_id     String     @db.Uuid        // <-- Cooperativa origen
-  M01Sistema     String                      // "SISCONCRE" | "SISCONCAP"
-  M01Fase        String                      // "F1" | "F2" | "F3" | "F4"
-  M01Archivo     String
-  M01Fecha       DateTime   @default(now())
-  M01Total       Int
-  M01Correctos   Int
-  M01Errores     Int
-  M01Estado      String                      // "EN_PROCESO" | "COMPLETADO" | "FALLÓ"
-  M01Log         String?
+  M01Id        Int      @id @default(autoincrement())
+  M01Coop_id   String   @db.Uuid // <-- Cooperativa origen
+  M01Sistema   String // "SISCONCRE" | "SISCONCAP"
+  M01Fase      String // "F1" | "F2" | "F3" | "F4"
+  M01Archivo   String
+  M01Fecha     DateTime @default(now())
+  M01Total     Int
+  M01Correctos Int
+  M01Errores   Int
+  M01Estado    String // "EN_PROCESO" | "COMPLETADO" | "FALLÓ"
+  M01Log       String?
 
-  cooperativa    R17Cooperativas @relation(fields: [M01Coop_id], references: [R17Id], onDelete: Cascade)
+  cooperativa R17Cooperativas @relation(fields: [M01Coop_id], references: [R17Id], onDelete: Cascade)
 
   @@index([M01Coop_id, M01Sistema, M01Fase])
   @@index([M01Fecha])
+}
+
+// * LICENCIAMIENTO
+
+model M02Modulo {
+  M02Id     Int     @id @default(autoincrement())
+  M02Codigo String  @unique // CONTROL_INTERNO, OPERACIONES, ADMIN_FINANZAS, VARIOS
+  M02Nombre String
+  M02Orden  Int?
+  M02Activo Boolean @default(true)
+
+  submodulos   M03SubModulo[]
+  cooperativas C02CooperativaModulo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model M03SubModulo {
+  M03Id     Int     @id @default(autoincrement())
+  M03Codigo String // AUDITORIA_CREDITO, INVENTARIOS, CONTABILIDAD, etc.
+  M03Nombre String
+  M03Orden  Int?
+  M03Activo Boolean @default(true)
+
+  M03ModuloId Int
+  modulo      M02Modulo @relation(fields: [M03ModuloId], references: [M02Id], onDelete: Cascade)
+
+  cooperativas C03CooperativaSubModulo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([M03ModuloId, M03Codigo])
+}
+
+model C02CooperativaModulo {
+  C02Id Int @id @default(autoincrement())
+
+  C02CoopId   String @db.Uuid
+  C02ModuloId Int
+
+  C02Activo      Boolean   @default(true)
+  C02FechaInicio DateTime
+  C02FechaFin    DateTime?
+
+  cooperativa R17Cooperativas @relation(fields: [C02CoopId], references: [R17Id], onDelete: Cascade)
+  modulo      M02Modulo       @relation(fields: [C02ModuloId], references: [M02Id])
+
+  submodulos C03CooperativaSubModulo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([C02CoopId, C02ModuloId])
+}
+
+model C03CooperativaSubModulo {
+  C03Id Int @id @default(autoincrement())
+
+  C03CoopModuloId Int
+  C03SubModuloId  Int
+
+  C03Activo Boolean @default(true)
+
+  coopModulo C02CooperativaModulo @relation(fields: [C03CoopModuloId], references: [C02Id], onDelete: Cascade)
+  subModulo  M03SubModulo         @relation(fields: [C03SubModuloId], references: [M03Id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([C03CoopModuloId, C03SubModuloId])
 }
 
 // TODO - pendiente npx prisma db push en produccion AWS
