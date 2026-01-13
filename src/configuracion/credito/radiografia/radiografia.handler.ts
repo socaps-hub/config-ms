@@ -1,8 +1,7 @@
 import { Controller, Logger } from "@nestjs/common";
 import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
 import { RadiografiaService } from "./radiografia.service";
-import { CreateRadiografiaCargaArgs } from "./dto/args/create-radiografia-carga.arg";
-import { FileUpload } from "graphql-upload-ts";
+import { RadioAreaEnum } from "src/configuracion/control-carga-radiografias/enums/control-carga-radio-area.enum";
 
 @Controller()
 export class RadiografiaHandler {
@@ -18,6 +17,13 @@ export class RadiografiaHandler {
         @Payload() { key, cooperativaCodigo }: { key: string; cooperativaCodigo: string },
     ) {        
         await this._service.parseFileAndBuildCreateRA01CreditoInput(key, cooperativaCodigo);
+    }
+
+    @EventPattern('config.radiografias.upload')
+    async handleCrearCargaMasivaRadiografia(
+        @Payload() { key, cooperativaCodigo, area }: { key: string; cooperativaCodigo: string, area: RadioAreaEnum },
+    ) {        
+        await this._service.executeCarga(key, cooperativaCodigo, area);
     }
 
 

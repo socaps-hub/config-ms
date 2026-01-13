@@ -5,7 +5,7 @@ import { FileUpload } from 'graphql-upload-ts';
 import { CreateRA01CreditoInput } from './dto/inputs/create-radiografia-credito.input';
 import { ExcelService } from 'src/common/excel/services/excel.service';
 import { ExcelUtils } from 'src/common/excel/utils/excel.utils';
-import { CreateRadiografiaCargaArgs } from './dto/args/create-radiografia-carga.arg';
+import { RadioAreaEnum } from 'src/configuracion/control-carga-radiografias/enums/control-carga-radio-area.enum';
 
 const MESES_MAP: Record<string, number> = {
   'enero': 1,
@@ -29,6 +29,10 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
 
     private readonly _logger = new Logger('RadiografiaService')
 
+    private router = {
+        "CREDITO": this.parseFileAndBuildCreateRA01CreditoInput.bind(this),
+    };
+
     constructor(
         private readonly excelService: ExcelService,
     ) {
@@ -38,6 +42,16 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
     async onModuleInit() {
         await this.$connect();
         this._logger.log('Database connected')
+    }
+
+    public async executeCarga(key: string, cooperativaId: string, area: RadioAreaEnum) {
+        const keyDest = area;
+        const handler = this.router[keyDest];
+
+        if (!handler)
+            throw new Error(`Carga no implementada para área: ${keyDest}`);
+
+        return handler(key, cooperativaId);
     }
     
     /**
@@ -204,6 +218,7 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
                         C01FechaCarga: new Date(),
                         C01PeriodoMes: periodoMes,
                         C01PeriodoAnio: periodoAnio,
+                        C01Area: RadioAreaEnum.CREDITO
                     },
                 });
 
@@ -269,11 +284,11 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
         // 🔹 Extraer el nombre del mes del archivo (e.g. “...-Febrero.xlsx”)
         const nombreArchivoSinExtension = archivo.replace('.xlsx', '');
         const partes = nombreArchivoSinExtension.split('-');
-        const nombreMes = partes[partes.length - 1].trim().toLowerCase();
+        const nombreMes = partes[partes.length - 2].trim().toLowerCase();
+        const periodoAnio = +partes[partes.length - 1].trim() || new Date().getFullYear();
 
         // 🔹 Determinar número del mes y año actual
         const periodoMes = MESES_MAP[nombreMes] ?? (new Date().getMonth() + 1);
-        const periodoAnio = new Date().getFullYear();
 
         this._logger.log(`📅 Mes detectado: ${nombreMes} → ${periodoMes}`);
 

@@ -76,6 +76,10 @@ enum CargaEstado {
   ANULADO
 }
 
+enum RADIO_AREA {
+  CREDITO
+}
+
 model R17Cooperativas {
   R17Id        String   @id @default(uuid()) @db.Uuid
   R17Nom       String
@@ -95,8 +99,9 @@ model R17Cooperativas {
 
   A01MuestraSeleccionCredito A01MuestraSeleccionCredito[]
 
-  migraciones M01ControlMigracion[]
-  modulos     C02CooperativaModulo[]
+  migraciones  M01ControlMigracion[]
+  modulos      C02CooperativaModulo[]
+  cargasRadios C01ControlCarga[]
 }
 
 model R01Prestamo {
@@ -502,14 +507,16 @@ model R25EvaluacionResumenFase3 {
 // * RADIOGRAFIAS
 // CONTROL DE CARGA DE RADIOGRAFIA
 model C01ControlCarga {
-  C01Id                Int      @id @default(autoincrement())
-  C01CooperativaCodigo String
+  C01Id                Int        @id @default(autoincrement())
+  C01CooperativaCodigo String     @db.Uuid
   C01Archivo           String?
-  C01FechaCarga        DateTime @default(now())
+  C01FechaCarga        DateTime   @default(now())
   C01PeriodoMes        Int
   C01PeriodoAnio       Int
+  C01Area              RADIO_AREA @default(CREDITO)
 
-  creditos RA01Credito[]
+  creditos    RA01Credito[]
+  cooperativa R17Cooperativas @relation(fields: [C01CooperativaCodigo], references: [R17Id], onDelete: Cascade)
 
   @@unique([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
   @@index([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
@@ -634,7 +641,7 @@ model A01MuestraSeleccionCredito {
 
   // Relación con la cooperativa
   A01CoopId   String          @db.Uuid
-  cooperativa R17Cooperativas @relation(fields: [A01CoopId], references: [R17Id])
+  cooperativa R17Cooperativas @relation(fields: [A01CoopId], references: [R17Id], onDelete: Cascade)
 
   // Parámetros de la muestra
   A01MargenError    Float
@@ -658,7 +665,7 @@ model A02MuestraCreditoSeleccion {
 
   // Relación con crédito original
   A02CreditoFolio Int
-  credito         RA01Credito @relation(fields: [A02CreditoFolio], references: [RA01Folio])
+  credito         RA01Credito @relation(fields: [A02CreditoFolio], references: [RA01Folio], onDelete: Cascade)
   A02Sucursal     String      @db.Uuid
   sucursal        R11Sucursal @relation(fields: [A02Sucursal], references: [R11Id])
 
@@ -847,5 +854,3 @@ model C03CooperativaSubModulo {
 
   @@unique([C03CoopModuloId, C03SubModuloId])
 }
-
-// TODO - pendiente npx prisma db push en produccion AWS
