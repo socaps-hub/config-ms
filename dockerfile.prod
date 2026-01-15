@@ -1,43 +1,46 @@
+# =====================
 # Dependencias
+# =====================
 FROM node:21-alpine3.19 as deps
 
 WORKDIR /usr/src/app
 
-COPY package.json ./
-COPY package-lock.json ./
-
+COPY package.json package-lock.json ./
 RUN npm install
 
 
-
-# Builder - Construye la app
+# =====================
+# Build
+# =====================
 FROM node:21-alpine3.19 as build
 
 WORKDIR /usr/src/app
 
-# Copiar de deps los módulos de node
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 
-# Copiar todo el código fuente de la app
+# Copiar código fuente COMPLETO (incluye prisma/)
 COPY . .
 
+# Prisma necesita schema REAL
 RUN npx prisma generate
 
 RUN npm run build
 
-# Solo dejar las dependencias de produccion
-RUN npm ci -f --only=production && npm cache clean --force
+# Limpiar deps dev
+RUN npm ci --only=production && npm cache clean --force
 
 
-# Crear la imágen final de Docker
+# =====================
+# Runtime
+# =====================
 FROM node:21-alpine3.19 as prod
 
 WORKDIR /usr/src/app
 
 COPY --from=build /usr/src/app/node_modules ./node_modules
-
-# Copiar la carpeta de dist
 COPY --from=build /usr/src/app/dist ./dist
+
+COPY --from=build /usr/src/app/prisma ./prisma
 
 ENV NODE_ENV=production
 
@@ -46,4 +49,5 @@ USER node
 
 EXPOSE 3000
 
-CMD [ "node", "dist/main.js" ]
+# Migrate deploy en PROD - SOLO EN ESTE MS
+CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma && node dist/main.js"]
