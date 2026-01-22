@@ -854,3 +854,82 @@ model C03CooperativaSubModulo {
 
   @@unique([C03CoopModuloId, C03SubModuloId])
 }
+
+
+// * ACTIVITY-LOG-MS
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  ASSIGN
+  UNASSIGN
+  UPLOAD
+  MIGRATE
+  EXECUTE
+  ERROR
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILED
+}
+
+enum AuditSource {
+  API
+  SYSTEM
+  JOB
+  MIGRATION
+}
+
+model AL01AuditLog {
+  AL01Id BigInt @id @default(autoincrement())
+
+  // Origen
+  AL01Service   String // supervision-ms, config-ms, auth-ms
+  AL01Module    String // credito, licenciamiento, radiografias
+  AL01Action    AuditAction
+  AL01Source    AuditSource @default(API)
+  AL01Result    AuditResult @default(SUCCESS)
+  AL01EventName String?
+
+  // Entidad afectada
+  AL01Entity   String // R01Prestamo, R05EvaluacionFase1, etc
+  AL01EntityId String? // uuid / id lógico
+
+  // Contexto usuario
+  AL01UserId     String?
+  AL01UserNombre String?
+  AL01UserRol    String?
+
+  // Contexto organizacional
+  AL01CooperativaId String?
+  AL01SucursalId    String?
+
+  // Datos antes / después
+  AL01Before Json?
+  AL01After  Json?
+
+  // Metadata técnica
+  AL01Ip            String?
+  AL01UserAgent     String?
+  AL01RequestId     String?
+  AL01CorrelationId String?
+
+  // Mensajes y errores
+  AL01Message String?
+  AL01Error   String?
+
+  // Timestamps
+  AL01CreatedAt DateTime @default(now())
+
+  @@index([AL01Service, AL01Module])
+  @@index([AL01Action])
+  @@index([AL01Entity, AL01EntityId])
+  @@index([AL01UserId])
+  @@index([AL01CooperativaId])
+  @@index([AL01CreatedAt])
+  @@index([AL01CooperativaId, AL01CreatedAt])
+}
