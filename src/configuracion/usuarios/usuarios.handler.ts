@@ -129,12 +129,12 @@ export class UsuariosHandler {
 
     @UseInterceptors(ActivityLogRpcInterceptor)
     @ActivityLog({
-    service: 'config-ms',
-    module: 'usuarios',
-    action: AuditActionEnum.UPLOAD,
-    source: AuditSourceEnum.JOB,
-    eventName: 'config.usuarios.createManyFromExcel',
-    entities: [],
+        service: 'config-ms',
+        module: 'usuarios',
+        action: AuditActionEnum.UPLOAD,
+        source: AuditSourceEnum.JOB,
+        eventName: 'config.usuarios.createManyFromExcel',
+        entities: [],
     })
     @MessagePattern('config.usuarios.createManyFromExcel')
     handleCreateManyFromExcel(

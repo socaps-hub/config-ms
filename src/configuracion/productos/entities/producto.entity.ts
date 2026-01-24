@@ -19,8 +19,8 @@ export class Producto {
   @Field( () => String )
   R13Coop_id: string
 
-  @Field( () => Categoria )
-  categoria: Categoria
+  @Field( () => Categoria, { nullable: true })
+  categoria?: Categoria
 
 
 }

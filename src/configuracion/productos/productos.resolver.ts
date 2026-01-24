@@ -17,54 +17,54 @@ import { CreateManyFromExcelArgs } from './dto/args/create-many-from-excel.arg';
 export class ProductosResolver {
   constructor(private readonly productosService: ProductosService) {}
 
-  @Mutation(() => Producto)
-  createProducto(
-    @Args('createProductoInput') createProductoInput: CreateProductoInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.productosService.create(createProductoInput);
-  }
-
-  @Query(() => [Producto], { name: 'productos' })
-  findAll(
-    @GetUserGraphQL() user: Usuario,
-    @Args('categoriaId', { type: () => String, nullable: true }) categoriaId?: string,
-  ) {
-    return this.productosService.findAll(user, categoriaId);
-  }
-
-  // @Query(() => Producto, { name: 'producto' })
-  // findOne(@Args('id', { type: () => Int }) id: number) {
-  //   return this.productosService.findOne(id);
+  // @Mutation(() => Producto)
+  // createProducto(
+  //   @Args('createProductoInput') createProductoInput: CreateProductoInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.productosService.create(createProductoInput);
   // }
 
-  @Mutation(() => Producto)
-  updateProducto(
-    @Args('updateProductoInput') updateProductoInput: UpdateProductoInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.productosService.update(updateProductoInput.id, updateProductoInput );
-  }
+  // @Query(() => [Producto], { name: 'productos' })
+  // findAll(
+  //   @GetUserGraphQL() user: Usuario,
+  //   @Args('categoriaId', { type: () => String, nullable: true }) categoriaId?: string,
+  // ) {
+  //   return this.productosService.findAll(user, categoriaId);
+  // }
 
-  @Mutation(() => Producto)
-  activateProducto(
-    @Args('name', { type: () => String }) name: string,
-    @Args('coopId', { type: () => String }) coopId: string,
-  ) {
-    return this.productosService.activate(name, coopId);
-  }
+  // // @Query(() => Producto, { name: 'producto' })
+  // // findOne(@Args('id', { type: () => Int }) id: number) {
+  // //   return this.productosService.findOne(id);
+  // // }
 
-  @Mutation(() => Producto)
-  desactivateProducto(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.productosService.desactivate(id);
-  }
+  // @Mutation(() => Producto)
+  // updateProducto(
+  //   @Args('updateProductoInput') updateProductoInput: UpdateProductoInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.productosService.update(updateProductoInput.id, updateProductoInput );
+  // }
 
-  @Mutation(() => BooleanResponse)
-  createManyFromExcel(
-    @Args('createManyFromExcelArgs') createManyFromExcelArgs: CreateManyFromExcelArgs,
-  ) {
-    return this.productosService.createManyFromExcel(createManyFromExcelArgs.data, createManyFromExcelArgs.coopId);
-  }
+  // @Mutation(() => Producto)
+  // activateProducto(
+  //   @Args('name', { type: () => String }) name: string,
+  //   @Args('coopId', { type: () => String }) coopId: string,
+  // ) {
+  //   return this.productosService.activate(name, coopId);
+  // }
+
+  // @Mutation(() => Producto)
+  // desactivateProducto(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.productosService.desactivate(id);
+  // }
+
+  // @Mutation(() => BooleanResponse)
+  // createManyFromExcel(
+  //   @Args('createManyFromExcelArgs') createManyFromExcelArgs: CreateManyFromExcelArgs,
+  // ) {
+  //   return this.productosService.createManyFromExcel(createManyFromExcelArgs.data, createManyFromExcelArgs.coopId);
+  // }
 }

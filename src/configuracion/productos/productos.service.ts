@@ -64,9 +64,6 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         R13Nom: R13Nom.toLowerCase(),
         R13Activ: true,
         R13Coop_id,
-      },
-      include: {
-        categoria: true
       }
     })    
   }
@@ -170,36 +167,17 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
       data: {
         R13Id: productDB.R13Id,
         R13Cat_id: R13Cat_id ? R13Cat_id : productDB.R13Cat_id,
-        R13Nom: R13Nom ? R13Nom : productDB.R13Nom,
+        R13Nom: R13Nom ? R13Nom.toLowerCase() : productDB.R13Nom.toLowerCase(),
         R13Activ: productDB.R13Activ,
         R13Coop_id: productDB.R13Coop_id,
       },
-      include: {
-        categoria: {
-          select: {
-            R14Id: true,
-            R14Nom: true,
-            R14Activ: true
-          }
-        }
-      }
     })
   }
 
   async activate( name: string, coopId: string ) {
-    console.log(name, coopId);
     
     const producto = await this.r13Producto.findFirst({
       where: { R13Nom: name.toLowerCase().trim(), R13Coop_id: coopId },
-      include: {
-        categoria: {
-          select: {
-            R14Id: true,
-            R14Nom: true,
-            R14Activ: true
-          }
-        }
-      }
     })
 
     if ( !producto ) {
@@ -220,15 +198,6 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         R13Activ: producto.R13Activ,
         R13Coop_id: producto.R13Coop_id,
       },
-      include: {
-        categoria: {
-          select: {
-            R14Id: true,
-            R14Nom: true,
-            R14Activ: true
-          }
-        }
-      }
     })
   }
 
@@ -245,15 +214,6 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         R13Activ: producto.R13Activ,
         R13Coop_id: producto.R13Coop_id,
       },
-      include: {
-        categoria: {
-          select: {
-            R14Id: true,
-            R14Nom: true,
-            R14Activ: true
-          }
-        }
-      }
     })
   }
 
