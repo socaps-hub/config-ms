@@ -18,59 +18,59 @@ export class UsuariosResolver {
 
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  @Mutation(() => Usuario)
-  createUsuario(
-    @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput,
-  ) {
-    return this.usuariosService.create(createUsuarioInput);
-  }
+  // @Mutation(() => Usuario)
+  // createUsuario(
+  //   @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput,
+  // ) {
+  //   return this.usuariosService.create(createUsuarioInput);
+  // }
 
-  @Query(() => [Usuario], { name: 'usuarios' })
-  findAll(
-    @Args() validRoles: ValidRolesArgs,
-    @GetUserGraphQL() user: Usuario,
-  ) {
-    return this.usuariosService.findAll( validRoles.role, user );
-  }
+  // @Query(() => [Usuario], { name: 'usuarios' })
+  // findAll(
+  //   @Args() validRoles: ValidRolesArgs,
+  //   @GetUserGraphQL() user: Usuario,
+  // ) {
+  //   return this.usuariosService.findAll( validRoles.role, user );
+  // }
 
-  @Query(() => Usuario, { name: 'usuario' })
-  findByNI(
-    @Args('ni', { type: () => String }) ni: string
-  ) {
-    return this.usuariosService.findByNI(ni, true);
-  }
+  // @Query(() => Usuario, { name: 'usuario' })
+  // findByNI(
+  //   @Args('ni', { type: () => String }) ni: string
+  // ) {
+  //   return this.usuariosService.findByNI(ni, true);
+  // }
 
-  @Mutation(() => Usuario)
-  updateUsuario(
-    @Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput
-  ) {
-    return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
-  }
+  // @Mutation(() => Usuario)
+  // updateUsuario(
+  //   @Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput
+  // ) {
+  //   return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
+  // }
 
-  @Mutation(() => Usuario)
-  desactivateUser(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string) {
-    return this.usuariosService.desactivate(id);
-  }
+  // @Mutation(() => Usuario)
+  // desactivateUser(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string) {
+  //   return this.usuariosService.desactivate(id);
+  // }
 
-  @Mutation(() => Usuario)
-  activateUser(
-    @Args('userNI', { type: () => String }) userNI: string) {
-    return this.usuariosService.activate(userNI.toUpperCase());
-  }
+  // @Mutation(() => Usuario)
+  // activateUser(
+  //   @Args('userNI', { type: () => String }) userNI: string) {
+  //   return this.usuariosService.activate(userNI.toUpperCase());
+  // }
 
-  @Mutation(() => Boolean)
-  async changePassword(
-    @Args('data') data: ChangePasswordInput,
-    @GetUserGraphQL() user: Usuario,
-  ): Promise<boolean> {
-    return this.usuariosService.changePassword(data, user);
-  }
+  // @Mutation(() => Boolean)
+  // async changePassword(
+  //   @Args('data') data: ChangePasswordInput,
+  //   @GetUserGraphQL() user: Usuario,
+  // ): Promise<boolean> {
+  //   return this.usuariosService.changePassword(data, user);
+  // }
 
-  @Mutation(() => BooleanResponse)
-  createManyUsuariosFromExcel(
-    @Args('createManyUsuariosFromExcelArgs') createManyUsuariosFromExcelArgs: CreateManyUsuariosFromExcelArgs,
-  ) {
-    return this.usuariosService.createManyFromExcel(createManyUsuariosFromExcelArgs.data, createManyUsuariosFromExcelArgs.coopId);
-  }
+  // @Mutation(() => BooleanResponse)
+  // createManyUsuariosFromExcel(
+  //   @Args('createManyUsuariosFromExcelArgs') createManyUsuariosFromExcelArgs: CreateManyUsuariosFromExcelArgs,
+  // ) {
+  //   return this.usuariosService.createManyFromExcel(createManyUsuariosFromExcelArgs.data, createManyUsuariosFromExcelArgs.coopId);
+  // }
 }

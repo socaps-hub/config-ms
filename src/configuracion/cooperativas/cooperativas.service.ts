@@ -30,9 +30,6 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       where: { R17Nom: R17Nom.trim() }
     })
 
-    console.log(R17Nom, R17Logo);
-
-
     if (cooperativa) {
 
       if (!cooperativa.R17Activ) {
@@ -48,53 +45,14 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
       })
     }
 
-    return await this.r17Cooperativas.create({
+    const coop = await this.r17Cooperativas.create({
       data: {
         R17Nom,
         R17Logo
-      },
-      include: {
-        sucursales: true,
-        usuarios: {
-          where: {
-            R12Activ: true,
-          },
-          orderBy: {
-            R12Creado_en: 'desc'
-          },
-          select: {
-            R12Id: true,
-            R12Ni: true,
-            R12Nom: true,
-            R12Suc_id: true,
-            R12Rol: true,
-            R12Activ: true,
-            sucursal: true,
-          }
-        },
-        productos: {
-          where: {
-            R13Activ: true,
-          },
-          orderBy: {
-            R13Creado_en: 'desc'
-          },
-          select: {
-            R13Id: true,
-            R13Nom: true,
-            R13Cat_id: true,
-            R13Activ: true,
-            R13Coop_id: true,
-            categoria: true,
-          }
-        },
-        grupos: {
-          orderBy: {
-            R02Creado_en: 'desc'
-          }
-        }
-      }
+      },  
     })
+
+    return coop
   }
 
   async findAll(role?: ValidRoles) {
@@ -294,47 +252,6 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Id: cooperativaDB.R17Id,
         ...data,
       },
-      include: {
-        sucursales: true,
-        usuarios: {
-          where: {
-            R12Activ: true,
-          },
-          orderBy: {
-            R12Creado_en: 'desc'
-          },
-          select: {
-            R12Id: true,
-            R12Ni: true,
-            R12Nom: true,
-            R12Suc_id: true,
-            R12Rol: true,
-            R12Activ: true,
-            sucursal: true,
-          }
-        },
-        productos: {
-          where: {
-            R13Activ: true,
-          },
-          orderBy: {
-            R13Creado_en: 'desc'
-          },
-          select: {
-            R13Id: true,
-            R13Nom: true,
-            R13Cat_id: true,
-            R13Activ: true,
-            R13Coop_id: true,
-            categoria: true,
-          }
-        },
-        grupos: {
-          orderBy: {
-            R02Creado_en: 'desc'
-          }
-        }
-      }
     });
   }
 
@@ -359,47 +276,6 @@ export class CooperativasService extends PrismaClient implements OnModuleInit {
         R17Activ: true,
         R17Logo: cooperativa.R17Logo,
       },
-      include: {
-        sucursales: true,
-        usuarios: {
-          where: {
-            R12Activ: true,
-          },
-          orderBy: {
-            R12Creado_en: 'desc'
-          },
-          select: {
-            R12Id: true,
-            R12Ni: true,
-            R12Nom: true,
-            R12Suc_id: true,
-            R12Rol: true,
-            R12Activ: true,
-            sucursal: true,
-          }
-        },
-        productos: {
-          where: {
-            R13Activ: true,
-          },
-          orderBy: {
-            R13Creado_en: 'desc'
-          },
-          select: {
-            R13Id: true,
-            R13Nom: true,
-            R13Cat_id: true,
-            R13Activ: true,
-            R13Coop_id: true,
-            categoria: true,
-          }
-        },
-        grupos: {
-          orderBy: {
-            R02Creado_en: 'desc'
-          }
-        }
-      }
     });
   }
 

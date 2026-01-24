@@ -16,55 +16,55 @@ export class CooperativasResolver {
     private readonly cooperativasService: CooperativasService
   ) {}
 
-  @Mutation(() => Cooperativa)
-  createCooperativa(
-    @Args('createCooperativaInput') createCooperativaInput: CreateCooperativaInput
-  ) {
-    return this.cooperativasService.create(createCooperativaInput);
-  }
+  // @Mutation(() => Cooperativa)
+  // createCooperativa(
+  //   @Args('createCooperativaInput') createCooperativaInput: CreateCooperativaInput
+  // ) {
+  //   return this.cooperativasService.create(createCooperativaInput);
+  // }
 
-  @Query(() => [Cooperativa], { name: 'cooperativas' })
-  findAll(
-    @Args() validRoles: ValidRolesArgs
-  ) {
-    return this.cooperativasService.findAll( validRoles.role );
-  }
+  // @Query(() => [Cooperativa], { name: 'cooperativas' })
+  // findAll(
+  //   @Args() validRoles: ValidRolesArgs
+  // ) {
+  //   return this.cooperativasService.findAll( validRoles.role );
+  // }
 
-  @Query(() => [Cooperativa], { name: 'cooperativasWithEjecutivosOnly' })
-  findAllWithEjecutivos() {
-    return this.cooperativasService.findAllWithEjecutivos();
-  }
+  // @Query(() => [Cooperativa], { name: 'cooperativasWithEjecutivosOnly' })
+  // findAllWithEjecutivos() {
+  //   return this.cooperativasService.findAllWithEjecutivos();
+  // }
 
-  @Query(() => Cooperativa, { name: 'cooperativa' })
-  findOne(
-    @Args('id', { type: () => ID }, ParseUUIDPipe ) id: string
-  ) {
-    return this.cooperativasService.findOne(id);
-  }
+  // @Query(() => Cooperativa, { name: 'cooperativa' })
+  // findOne(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe ) id: string
+  // ) {
+  //   return this.cooperativasService.findOne(id);
+  // }
 
-  @Mutation(() => Cooperativa)
-  updateCooperativa(
-    @Args('updateCooperativaInput') updateCooperativaInput: UpdateCooperativaInput
-  ) {
-    return this.cooperativasService.update(updateCooperativaInput.id, updateCooperativaInput);
-  }
+  // @Mutation(() => Cooperativa)
+  // updateCooperativa(
+  //   @Args('updateCooperativaInput') updateCooperativaInput: UpdateCooperativaInput
+  // ) {
+  //   return this.cooperativasService.update(updateCooperativaInput.id, updateCooperativaInput);
+  // }
 
-  @Mutation(() => Cooperativa)
-  activateCooperativa(
-    @Args('name', { type: () => String }) name: string
-  ) {
-    return this.cooperativasService.activate(name);
-  }
+  // @Mutation(() => Cooperativa)
+  // activateCooperativa(
+  //   @Args('name', { type: () => String }) name: string
+  // ) {
+  //   return this.cooperativasService.activate(name);
+  // }
 
-  @Mutation(() => Cooperativa)
-  desactivateCooperativa(
-    @Args('id', { type: () => String }, ParseUUIDPipe) id: string
-  ) {
-    return this.cooperativasService.desactivate(id);
-  }
+  // @Mutation(() => Cooperativa)
+  // desactivateCooperativa(
+  //   @Args('id', { type: () => String }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.cooperativasService.desactivate(id);
+  // }
 
-  @Query(() => [CooperativaRadiografiaStatus], { name: 'cooperativasRadiografiaCreditoStatus' })
-  async getCooperativasRadiografiaCreditoStatus() {
-    return this.cooperativasService.getCooperativasRadiografiaCreditoStatus();
-  }
+  // @Query(() => [CooperativaRadiografiaStatus], { name: 'cooperativasRadiografiaCreditoStatus' })
+  // async getCooperativasRadiografiaCreditoStatus() {
+  //   return this.cooperativasService.getCooperativasRadiografiaCreditoStatus();
+  // }
 }

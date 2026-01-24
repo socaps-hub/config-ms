@@ -243,7 +243,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   }
 
-  async changePassword(input: ChangePasswordInput, user: Usuario): Promise<boolean> {
+  async changePassword(input: ChangePasswordInput, user: Usuario): Promise<Usuario> {
     const usuario = await this.findByID( user.R12Id )
 
     const valid = await bcryptAdapter.compare(input.currentPassword, usuario.R12Password);
@@ -251,12 +251,10 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
     const hashed = await bcryptAdapter.hash(input.newPassword);
 
-    await this.r12Usuario.update({
+    return this.r12Usuario.update({
       where: { R12Id: user.R12Id },
       data: { R12Password: hashed }
     });
-
-    return true;
   }
 
   async createManyFromExcel(data: CreateUsuarioImportDto[], coopId: string): Promise<BooleanResponse> {
@@ -291,7 +289,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
         // Verificar si el usuario ya existe en esa cooperativa
         const existe = await this.r12Usuario.findFirst({
           where: {
-            R12Ni: usuario,
+            R12Ni: usuario.toUpperCase(),
             R12Coop_id: coopId,
           },
         });
@@ -301,8 +299,8 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
         const hashedPassword = bcryptAdapter.hash(password);
 
         usuariosToCreate.push({
-          R12Nom: nombre,
-          R12Ni: usuario,
+          R12Nom: nombre.toUpperCase(),
+          R12Ni: usuario.toUpperCase(),
           R12Password: hashedPassword,
           R12Rol: rol,
           R12Suc_id: sucursal.R11Id,
