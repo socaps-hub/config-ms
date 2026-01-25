@@ -12,6 +12,7 @@ import { ActivityLog } from "src/common/decorators/activity-log.decorator";
 import { AuditActionEnum } from "src/common/enums/audit-action.enum";
 import { ActivityLogRpcInterceptor } from "src/common/interceptor/activity-log-rpc.interceptor";
 import { AuditSourceEnum } from "src/common/enums/audit-source.enum";
+import { RpcMetaContext } from "src/common/entities/rpc-meta-context.interface";
 
 @Controller()
 export class UsuariosHandler {
@@ -122,7 +123,7 @@ export class UsuariosHandler {
     })
     @MessagePattern('config.usuarios.changePassword')
     handleChangePassword(
-        @Payload() data: { input: ChangePasswordInput, user: Usuario }
+        @Payload() data: { input: ChangePasswordInput, user: Usuario, meta: RpcMetaContext }
     ) {
         return this._usuariosService.changePassword( data.input, data.user )
     }

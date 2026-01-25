@@ -8,19 +8,20 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, tap, catchError } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
-import { AuditSourceEnum } from '../enums/audit-source.enum';
 import { ActivityLogMetadata, ACTIVITY_LOG_KEY } from '../decorators/activity-log.decorator';
-import { AuditResultEnum } from '../enums/audit-result.enum';
 import { NATS_SERVICE } from 'src/config';
 import { ActivityLogEvent } from '../entities/activity-log-event.interface';
+import { AuditResultEnum } from '../enums/audit-result.enum';
+import { AuditSourceEnum } from '../enums/audit-source.enum';
 
 @Injectable()
 export class ActivityLogRpcInterceptor implements NestInterceptor {
+
   constructor(
     private readonly reflector: Reflector,
     @Inject(NATS_SERVICE)
     private readonly natsClient: ClientProxy,
-  ) {}
+  ) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const meta = this.reflector.get<ActivityLogMetadata>(
@@ -32,12 +33,35 @@ export class ActivityLogRpcInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const rpcCtx = context.switchToRpc();
-    const payload = rpcCtx.getData();
+    const contextType = context.getType<'rpc' | 'http'>();
 
-    const user = payload?.user;
-    const input = payload?.input ?? payload;
-    const metaContext = payload?.meta;
+    let user: any;
+    let input: any;
+    let metaContext: any;
+
+    if (contextType === 'rpc') {
+      const rpcCtx = context.switchToRpc();
+      const payload = rpcCtx.getData();
+      
+      user = payload?.user;
+      input = payload?.input ?? payload;
+      metaContext = payload?.meta;
+    }
+
+    if (contextType === 'http') {
+      const httpCtx = context.switchToHttp();
+      const req = httpCtx.getRequest();
+
+      user = req.user;
+      input = req.body;
+
+      metaContext = {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        requestId: req.headers['x-request-id'],
+        correlationId: req.headers['x-correlation-id'],
+      };
+    }
 
     return next.handle().pipe(
       tap((response) => {
@@ -65,6 +89,7 @@ export class ActivityLogRpcInterceptor implements NestInterceptor {
       }),
     );
   }
+
 
   private emitEvents(
     meta: ActivityLogMetadata,
@@ -163,7 +188,7 @@ export class ActivityLogRpcInterceptor implements NestInterceptor {
             sucursalId: user?.R12Suc_id,
           },
 
-          before: meta.operationName !== 'CHANGE_PASSWORD' ? input : {},
+          before: meta.operationName !== 'CHANGE_PASSWORD' ? input : { userId: user.R12Id },
           after: result === AuditResultEnum.SUCCESS ? response : undefined,
 
           meta: {

@@ -15,7 +15,8 @@ import { CommonModule } from './common/common.module';
       autoSchemaFile: join( process.cwd(), 'src/schema.gql'),
       plugins: [
         ApolloServerPluginLandingPageLocalDefault(),
-      ]
+      ],
+      context: ({ req }) => ({ req }),
     }),
     ConfiguracionModule,
     CommonModule,
