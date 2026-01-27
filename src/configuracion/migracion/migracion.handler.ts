@@ -30,22 +30,7 @@ export class MigracionHandler {
     ) {
         return await this._service.getControlMigrationById( id )
     }
-
-    // ============================================================
-    //  MIGRACIÓN SISCONCRE - FASE 1
-    // ============================================================
-    // @EventPattern('config.migracion.sisconcre.f1')
-    // async handleSisconcreF1(
-    //     @Payload() data: { key: string; cooperativaId: string }
-    // ): Promise<BooleanResponse> {
-    //     return await this._service.procesarMigracionF1({
-    //         key: data.key,
-    //         cooperativaId: data.cooperativaId,
-    //         sistema: 'SISCONCRE',
-    //         fase: 'F1'
-    //     });
-    // }
-
+    
     @UseInterceptors(ActivityLogRpcInterceptor)
     @ActivityLog({
         service: 'config-ms',

@@ -142,8 +142,25 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             // 3️⃣ Pre-cargar catálogos en memoria
             //    (solo 1 vez, sin repetir por fila)
             // ==========================
-            const [sucursales, categorias, productos, usuarios, elementos] =
+            // Conjunto de préstamos que vienen en el Excel
+            const prestamosNumsSet = new Set<string>();
+            for (const row of rows) {
+                const rawNum = row['Num Prestamo']?.toString() ?? '';
+                if (!rawNum) continue;
+                const num = rawNum.padStart(8, '0');
+                prestamosNumsSet.add(num);
+            }
+            const prestamosNums = Array.from(prestamosNumsSet);
+
+            const [prestamos, sucursales, categorias, productos, usuarios, elementos] =
                 await this.$transaction([
+                    // Préstamos existentes de la coop que estén en el Excel
+                    this.r01Prestamo.findMany({
+                        where: {
+                            R01Coop_id: cooperativaId,
+                            R01NUM: { in: prestamosNums },
+                        },
+                    }),
                     this.r11Sucursal.findMany({
                         where: { R11Coop_id: cooperativaId },
                     }),
@@ -170,6 +187,12 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             // ==========================
             // 4️⃣ Construir Mapas para lookups O(1)
             // ==========================
+
+            // Préstamo por número
+            const mapaPrestamos = new Map<string, (typeof prestamos)[0]>();
+            prestamos.forEach((p) => {
+                mapaPrestamos.set(p.R01NUM, p);
+            });
 
             // sucursalNum (ej. "01") → sucursal
             const mapaSucursales = new Map<string, (typeof sucursales)[0]>();
@@ -229,6 +252,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                                 cooperativaId,
                                 tx,
                                 {
+                                    mapaPrestamos,
                                     mapaSucursales,
                                     mapaCategorias,
                                     mapaProductos,
@@ -251,7 +275,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             // ---------------------------
                             const { Ha, Hm, Hb, Rc } = await this.crearEvaluacionesR05(
                                 row,
-                                prestamo.R01NUM,
+                                prestamo.R01Id,
                                 tx,
                                 supervisor.R12Id,
                                 cooperativaId,
@@ -262,7 +286,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             // c) Crear R06 (resumen) REUSANDO los contadores ya calculados
                             // ---------------------------
                             await this.crearResumenR06(
-                                prestamo.R01NUM,
+                                prestamo.R01Id,
                                 tx,
                                 supervisor.R12Id,
                                 { Ha, Hm, Hb, Rc },
@@ -336,13 +360,25 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         cooperativaId: string,
         tx: any,
         maps: {
+            mapaPrestamos: Map<string, any>;
             mapaSucursales: Map<string, any>;
             mapaCategorias: Map<string, any>;
             mapaProductos: Map<string, any>;
             mapaUsuarios: Map<string, any>;
         },
     ) {
-        const { mapaSucursales, mapaCategorias, mapaProductos, mapaUsuarios } = maps;
+        const { mapaPrestamos, mapaSucursales, mapaCategorias, mapaProductos, mapaUsuarios } = maps;
+
+        // ---------------------------
+        // a) Validar que exista el préstamo (R01) y el resumen F1 (R06)
+        // ---------------------------
+        const rawNum = row['Num Prestamo']?.toString() ?? '';
+        const prestamoNum = rawNum.padStart(8, '0');
+
+        const prestamo = mapaPrestamos.get(prestamoNum);
+        if (prestamo) {
+            throw new Error(`N° de Préstamo ${prestamo.R01NUM} ya existente`);
+        }
 
         // 1) Sucursal por número
         const sucursalNum = row['Sucursal']?.toString().trim() ?? '';
@@ -423,14 +459,14 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      */
     async crearEvaluacionesR05(
         row: any,
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         cooperativaId: string,
         mapaElementos: Map<string, any>,
     ): Promise<{ Ha: number; Hm: number; Hb: number; Rc: number }> {
         const evaluacionesData: {
-            R05P_num: string;
+            R05P_id: string;
             R05E_id: string;
             R05Res: any;
             R05Ev_por: string;
@@ -471,7 +507,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
             // 5. Armar registro para createMany
             evaluacionesData.push({
-                R05P_num: prestamoNum,
+                R05P_id: prestamoId,
                 R05E_id: elemento.R04Id,
                 R05Res: resultado,
                 R05Ev_por: supervisorId,
@@ -494,7 +530,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      * calculados previamente (Ha, Hm, Hb, Rc), sin hacer SELECT adicional.
      */
     async crearResumenR06(
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         counters: { Ha: number; Hm: number; Hb: number; Rc: number },
@@ -506,7 +542,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
         return tx.r06EvaluacionResumenFase1.create({
             data: {
-                R06P_num: prestamoNum,
+                R06P_id: prestamoId,
                 R06Ha: Ha,
                 R06Hm: Hm,
                 R06Hb: Hb,
@@ -638,7 +674,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 // Resúmenes de F1 para estos préstamos
                 this.r06EvaluacionResumenFase1.findMany({
                     where: {
-                        R06P_num: { in: prestamosNums },
+                        prestamo: { R01NUM: { in: prestamosNums }, }
                     },
                 }),
             ]);
@@ -673,7 +709,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             >();
             resF1List.forEach((r) => {
                 const hallazgosTotales = (r.R06Ha ?? 0) + (r.R06Hm ?? 0) + (r.R06Hb ?? 0);
-                mapaResumenF1.set(r.R06P_num, { ...r, hallazgosTotales });
+                mapaResumenF1.set(r.R06P_id, { ...r, hallazgosTotales });
             });
 
             let correctos = 0;
@@ -703,7 +739,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                                 );
                             }
 
-                            const resumenF1 = mapaResumenF1.get(prestamoNum);
+                            const resumenF1 = mapaResumenF1.get(prestamo.R01Id);
                             if (!resumenF1) {
                                 throw new Error(
                                     `Resumen F1 (R06) no encontrado para préstamo: ${prestamoNum}`,
@@ -725,7 +761,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             // ---------------------------
                             const counters = await this.crearEvaluacionesR07(
                                 row,
-                                prestamoNum,
+                                prestamo.R01Id,
                                 tx,
                                 supervisor.R12Id,
                                 mapaElementos,
@@ -736,7 +772,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             // ---------------------------
                             await this.crearResumenR08(
                                 row,
-                                prestamoNum,
+                                prestamo.R01Id,
                                 tx,
                                 supervisor.R12Id,
                                 counters,
@@ -745,7 +781,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                             // Actualizar a R01Est correspondiente
                             await tx.r01Prestamo.update({
-                                where: { R01NUM: prestamoNum },
+                                where: { R01Id: prestamo.R01Id },
                                 data: { R01Est: 'Con seguimiento' },
                             })
                         },
@@ -817,13 +853,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      */
     async crearEvaluacionesR07(
         row: any,
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         mapaElementos: Map<string, any>,
     ): Promise<{ SolvA: number; SolvM: number; SolvB: number; SolvT: number; Rc: number }> {
         const evaluacionesData: {
-            R07P_num: string;
+            R07P_id: string;
             R07E_id: string;
             R07Res: any;      // ResFaseII
             R07Ev_por: string;
@@ -870,7 +906,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
             // 5️⃣ Armar registro para createMany
             evaluacionesData.push({
-                R07P_num: prestamoNum,
+                R07P_id: prestamoId,
                 R07E_id: elemento.R04Id,
                 R07Res: resultado,
                 R07Ev_por: supervisorId,
@@ -898,7 +934,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
  */
     async crearResumenR08(
         row: any,
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         counters: { SolvA: number; SolvM: number; SolvB: number; SolvT: number; Rc: number },
@@ -919,7 +955,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
         return tx.r08EvaluacionResumenFase2.create({
             data: {
-                R08P_num: prestamoNum,
+                R08P_id: prestamoId,
                 R08SolvT: SolvT,
                 R08SolvA: SolvA,
                 R08SolvM: SolvM,
@@ -1010,7 +1046,25 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             });
 
             // 3) Precargar catálogos
-            const [usuarios, elementos] = await this.$transaction([
+
+            // Conjunto de préstamos que vienen en el Excel
+            const prestamosNumsSet = new Set<string>();
+            for (const row of rows) {
+                const rawNum = row['Num Prestamo']?.toString() ?? '';
+                if (!rawNum) continue;
+                const num = rawNum.padStart(8, '0');
+                prestamosNumsSet.add(num);
+            }
+            const prestamosNums = Array.from(prestamosNumsSet);
+
+            const [prestamos, usuarios, elementos] = await this.$transaction([
+                // Préstamos existentes de la coop que estén en el Excel
+                this.r01Prestamo.findMany({
+                    where: {
+                        R01Coop_id: cooperativaId,
+                        R01NUM: { in: prestamosNums },
+                    },
+                }),
                 this.r12Usuario.findMany({ where: { R12Coop_id: cooperativaId } }),
                 this.r04Elemento.findMany({
                     where: {
@@ -1020,6 +1074,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             ]);
 
             // ---- Mapas ----
+
+            // Préstamo por número
+            const mapaPrestamos = new Map<string, (typeof prestamos)[0]>();
+            prestamos.forEach((p) => {
+                mapaPrestamos.set(p.R01NUM, p);
+            });
+
             const mapaUsuarios = new Map<string, any>();
             usuarios.forEach(u => mapaUsuarios.set((u.R12Ni ?? "").trim().toUpperCase(), u));
 
@@ -1050,6 +1111,16 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         const ejecutivo = mapaUsuarios.get(ejecutivoKey);
                         if (!ejecutivo) throw new Error(`Ejecutivo no encontrado (NI): ${ejecutivoKey}`);
 
+                        // Validar existencia del préstamo    
+                        const prestamoNum = row["Num Prestamo"]?.toString().padStart(8, "0");
+                        const prestamoInDB = mapaPrestamos.get(prestamoNum);
+                        if (!prestamoInDB) {
+                            throw new Error(
+                                `Préstamo (R01) no encontrado para Num Prestamo: ${prestamoNum}`,
+                            );
+                        }
+                        const prestamoId = prestamoInDB.R01Id
+
                         // ================================
                         //    A) CREAR Evaluaciones R09
                         // ================================
@@ -1058,7 +1129,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             Ha,
                             Pend,
                             Rc
-                        } = this._crearEvaluacionesR09(row, mapaElementos);
+                        } = this._crearEvaluacionesR09(row, mapaElementos, prestamoId);
 
                         // Insert bulk
                         if (evaluacionesData.length > 0) {
@@ -1067,14 +1138,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                         // ================================
                         //    B) CREAR Resumen R10
-                        // ================================
-                        const prestamoNum = row["Num Prestamo"]?.toString().padStart(8, "0");
+                        // ================================                        
                         const observaciones = row["Observaciones al Desembolso"]
 
                         const fechaDes = ExcelUtils.parseExcelDate(row['Fecha Revision Desembolso']) ?? '';
 
                         await this._crearResumenR10(
-                            prestamoNum,
+                            prestamoId,
                             tx,
                             supervisor.R12Id,
                             ejecutivo.R12Id,
@@ -1085,7 +1155,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                         // Actualizar a R01Est correspondiente
                         await tx.r01Prestamo.update({
-                            where: { R01NUM: prestamoNum },
+                            where: { R01Id: prestamoId },
                             data: { R01Est: 'Con desembolso' },
                         })
                     });
@@ -1138,6 +1208,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
     private _crearEvaluacionesR09(
         row: any,
         mapaElementos: Map<string, any>,
+        prestamoId: string
     ): {
         evaluacionesData: any[],
         Ha: number,
@@ -1146,7 +1217,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
     } {
 
         const evaluacionesData: {
-            R09P_num: string
+            R09P_id: string
             R09E_id: string
             R09Res: any
             R09Ev_en: string
@@ -1177,7 +1248,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             }
 
             evaluacionesData.push({
-                R09P_num: row["Num Prestamo"]?.toString().padStart(8, "0"),
+                R09P_id: prestamoId,
                 R09E_id: elemento.R04Id,
                 R09Res: resultado,
                 R09Ev_en: fechaDes,
@@ -1189,7 +1260,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
 
     private async _crearResumenR10(
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         ejecutivoId: string,
@@ -1205,7 +1276,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
         return tx.r10EvaluacionResumenFase3.create({
             data: {
-                R10P_num: prestamoNum,
+                R10P_id: prestamoId,
                 R10Ha: Ha,
                 R10Pendientes: Pend,
                 R10Rc: Rc,
@@ -1265,16 +1336,34 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 },
             });
 
+            // Conjunto de préstamos que vienen en el Excel
+            const prestamosNumsSet = new Set<string>();
+            for (const row of rows) {
+                const rawNum = row['Num Prestamo']?.toString() ?? '';
+                if (!rawNum) continue;
+                const num = rawNum.padStart(8, '0');
+                prestamosNumsSet.add(num);
+            }
+            const prestamosNums = Array.from(prestamosNumsSet);
+
             // ============================================
             // 3️⃣ Pre-carga de catálogos
             // ============================================
             const [
+                prestamos,
                 usuarios,
                 elementosSeg,    // F1-F2 (hasta CR1)
                 elementosDes,    // F3-F4 (CS1 en adelante)
                 resumenF1,       // para SegCal
                 resumenF3        // para DesCal
             ] = await this.$transaction([
+                // Préstamos existentes de la coop que estén en el Excel
+                this.r01Prestamo.findMany({
+                    where: {
+                        R01Coop_id: cooperativaId,
+                        R01NUM: { in: prestamosNums },
+                    },
+                }),
                 this.r12Usuario.findMany({ where: { R12Coop_id: cooperativaId } }),
                 this.r04Elemento.findMany({
                     where: { rubro: { grupo: { R02Coop_id: cooperativaId, R02Tipo: GrupoTipo.SISCONCRE } } }
@@ -1283,16 +1372,21 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                     where: { rubro: { grupo: { R02Coop_id: cooperativaId, R02Tipo: GrupoTipo.SISCONCRE } } }
                 }),
                 this.r06EvaluacionResumenFase1.findMany({
-                    where: { prestamo: { R01Coop_id: cooperativaId } }
+                    where: { prestamo: { R01NUM: { in: prestamosNums } } }
                 }),
                 this.r10EvaluacionResumenFase3.findMany({
-                    where: { prestamo: { R01Coop_id: cooperativaId } }
+                    where: { prestamo: { R01NUM: { in: prestamosNums } } }
                 })
             ]);
 
             // ============================================
             // 4️⃣ Crear mapas para O(1)
             // ============================================
+            const mapaPrestamos = new Map<string, (typeof prestamos)[0]>();
+            prestamos.forEach((p) => {
+                mapaPrestamos.set(p.R01NUM, p);
+            });
+
             const mapaUsuarios = new Map<string, any>();
             usuarios.forEach(u => mapaUsuarios.set(u.R12Ni.toUpperCase(), u));
 
@@ -1307,10 +1401,10 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             });
 
             const mapaResumenF1 = new Map<string, any>();
-            resumenF1.forEach(r => mapaResumenF1.set(r.R06P_num, r));
+            resumenF1.forEach(r => mapaResumenF1.set(r.R06P_id, r));
 
             const mapaResumenF3 = new Map<string, any>();
-            resumenF3.forEach(r => mapaResumenF3.set(r.R10P_num, r));
+            resumenF3.forEach(r => mapaResumenF3.set(r.R10P_id, r));
 
             let correctos = 0;
             let errores = 0;
@@ -1325,6 +1419,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 try {
                     await this.$transaction(async (tx) => {
                         const prestamoNum = row['Num Prestamo']?.toString().padStart(8, '0');
+                        const prestamo = mapaPrestamos.get(prestamoNum);
+                        if (!prestamo) {
+                            throw new Error(
+                                `Préstamo (R01) no encontrado para Num Prestamo: ${prestamoNum}`,
+                            );
+                        }
+                        const prestamoId = prestamo.R01Id
 
                         const supervisorNi = row['Usuario Supervisor']?.toString().trim() ?? '';
                         const supervisor = mapaUsuarios.get(supervisorNi.toUpperCase());
@@ -1335,11 +1436,11 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         // -------------------------
                         const segCounters = await this._procesarEvaluacionesF4Seguimiento(
                             row,
-                            prestamoNum,
+                            prestamoId,
                             tx,
                             supervisor.R12Id,
                             mapaElementosSeg,
-                            mapaResumenF1.get(prestamoNum)
+                            mapaResumenF1.get(prestamoId)
                         );
 
                         // -------------------------
@@ -1347,11 +1448,11 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         // -------------------------
                         const desCounters = await this._procesarEvaluacionesF4Desembolso(
                             row,
-                            prestamoNum,
+                            prestamoId,
                             tx,
                             supervisor.R12Id,
                             mapaElementosDes,
-                            mapaResumenF3.get(prestamoNum)
+                            mapaResumenF3.get(prestamoId)
                         );
 
                         // -------------------------
@@ -1371,7 +1472,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         // -------------------------
                         await tx.r16EvaluacionResumenFase4.create({
                             data: {
-                                R16P_num: prestamoNum,
+                                R16P_id: prestamoId,
                                 R16SolvT: segCounters.SolvT,
                                 R16SolvA: segCounters.SolvA,
                                 R16SolvM: segCounters.SolvM,
@@ -1390,7 +1491,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                         // Actualizar a R01Est correspondiente
                         await tx.r01Prestamo.update({
-                            where: { R01NUM: prestamoNum },
+                            where: { R01Id: prestamoId },
                             data: { R01Est: 'Con global' },
                         })
 
@@ -1451,14 +1552,14 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      */
     private async _procesarEvaluacionesF4Seguimiento(
         row: any,
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         mapaElementosSeg: Map<string, any>,
         resumenF1: any,   // R06
     ) {
         const evalsToInsert: {
-            R15P_num: string
+            R15P_id: string
             R15E_id: string
             R15Res: ResFaseII
         }[] = [];
@@ -1506,7 +1607,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
             // 5️⃣ Insertar evaluación
             evalsToInsert.push({
-                R15P_num: prestamoNum,
+                R15P_id: prestamoId,
                 R15E_id: elemento.R04Id,
                 R15Res: resultado.toUpperCase() as ResFaseII,
             });
@@ -1541,14 +1642,14 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      */
     private async _procesarEvaluacionesF4Desembolso(
         row: any,
-        prestamoNum: string,
+        prestamoId: string,
         tx: any,
         supervisorId: string,
         mapaElementosDes: Map<string, any>,
         resumenF3: any   // R10
     ) {
         const evalsToInsert: {
-            R15P_num: string
+            R15P_id: string
             R15E_id: string
             R15Res: ResFaseII
         }[] = [];
@@ -1561,7 +1662,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
         // Cargar mapa de evaluaciones previas (F3)
         const prevEval = await tx.r09EvaluacionFase3.findMany({
-            where: { R09P_num: prestamoNum },
+            where: { R09P_id: prestamoId },
         });
 
         const mapaPrev = new Map<string, any>();
@@ -1599,7 +1700,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             }
 
             evalsToInsert.push({
-                R15P_num: prestamoNum,
+                R15P_id: prestamoId,
                 R15E_id: elemento.R04Id,
                 R15Res: resultado.toUpperCase() as ResFaseII,
             });
@@ -2492,9 +2593,9 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         const mapaMovimientos = new Map<string, (typeof movimientosF1)[0]>();
         movimientosF1.forEach((m) => {
             const key = this._claveMovimientoComposite(
-            m.R19Cag,
-            m.R19Suc_id,
-            m.R19FMov,
+                m.R19Cag,
+                m.R19Suc_id,
+                m.R19FMov,
             );
             mapaMovimientos.set(key, m);
         });
@@ -2578,7 +2679,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                     // const PSolv = resumenF2.R23PSolv - Solv;
                     const PSolvF2 = resumenF2.R23PSolv
                     let PSolv = 0
-                    if ( PSolvF2 > 0 ) {
+                    if (PSolvF2 > 0) {
                         PSolv = resumenF2.R23PSolv - Solv;
                     }
 
@@ -2601,7 +2702,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                     // Actualizar a R19Est correspondiente
                     await tx.r19Movimientos.update({
-                        where: { R19Folio:  movimiento.R19Folio },
+                        where: { R19Folio: movimiento.R19Folio },
                         data: { R19Est: 'Con global' },
                     })
 

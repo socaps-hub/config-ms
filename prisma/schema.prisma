@@ -105,7 +105,8 @@ model R17Cooperativas {
 }
 
 model R01Prestamo {
-  R01NUM            String   @id @db.Char(8)
+  R01Id             String   @id @default(uuid()) @db.Uuid
+  R01NUM            String   @db.Char(8)
   R01Suc_id         String   @db.Uuid
   R01Nso            String   @db.Char(6)
   R01Nom            String
@@ -146,6 +147,10 @@ model R01Prestamo {
   resumenF2 R08EvaluacionResumenFase2?
   resumenF3 R10EvaluacionResumenFase3?
   resumenF4 R16EvaluacionResumenFase4?
+
+  @@unique([R01NUM, R01Coop_id])  
+  @@index([R01Coop_id])
+  @@index([R01Suc_id])
 }
 
 model R02Grupo {
@@ -193,19 +198,23 @@ model R04Elemento {
 
 model R05EvaluacionFase1 {
   R05Id     String   @id @default(uuid()) @db.Uuid
-  R05P_num  String   @db.Char(8)
+  R05P_id   String   @db.Uuid
   R05E_id   String   @db.Uuid
   R05Res    ResFaseI @default(NA)
   R05Ev_por String   @db.Uuid
   R05Ev_en  String
 
+  prestamo  R01Prestamo @relation(fields: [R05P_id], references: [R01Id], onDelete: Cascade)
   elemento  R04Elemento @relation(fields: [R05E_id], references: [R04Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R05Ev_por], references: [R12Id])
-  prestamo  R01Prestamo @relation(fields: [R05P_num], references: [R01NUM], onDelete: Cascade)
+
+  @@unique([R05P_id, R05E_id])
+  @@index([R05P_id])
 }
 
 model R06EvaluacionResumenFase1 {
-  R06P_num  String       @id @db.Char(8)
+  R06Id     String       @id @default(uuid()) @db.Uuid
+  R06P_id   String       @db.Uuid
   R06Ha     Int
   R06Hm     Int
   R06Hb     Int
@@ -214,25 +223,33 @@ model R06EvaluacionResumenFase1 {
   R06Res    Resolucion
   R06Ev_por String       @db.Uuid
 
-  prestamo  R01Prestamo @relation(fields: [R06P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R06P_id], references: [R01Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R06Ev_por], references: [R12Id])
+
+  @@unique([R06P_id])
+  @@index([R06Ev_por])
 }
 
 model R07EvaluacionFase2 {
-  R07Id     String    @id @default(uuid()) @db.Uuid
-  R07P_num  String    @db.Char(8)
-  R07E_id   String    @db.Uuid
-  R07Res    ResFaseII
-  R07Ev_por String    @db.Uuid
-  R07Ev_en  String
+  R07Id      String    @id @default(uuid()) @db.Uuid
+  R07P_id    String    @db.Uuid
+  R07E_id    String    @db.Uuid
+  R07Res     ResFaseII
+  R07Ev_por  String    @db.Uuid
+  R07Ev_en   String
 
-  elemento  R04Elemento @relation(fields: [R07E_id], references: [R04Id], onDelete: Cascade)
-  evaluador R12Usuario  @relation(fields: [R07Ev_por], references: [R12Id])
-  prestamo  R01Prestamo @relation(fields: [R07P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo         R01Prestamo  @relation(fields: [R07P_id], references: [R01Id], onDelete: Cascade)
+  evaluador        R12Usuario   @relation(fields: [R07Ev_por], references: [R12Id])
+  r04Elemento      R04Elemento? @relation(fields: [r04ElementoR04Id], references: [R04Id])
+  r04ElementoR04Id String?      @db.Uuid
+
+  @@unique([R07P_id, R07E_id])
+  @@index([R07P_id])
 }
 
 model R08EvaluacionResumenFase2 {
-  R08P_num  String       @id @db.Char(8)
+  R08Id     String       @id @default(uuid()) @db.Uuid
+  R08P_id   String       @db.Uuid
   R08SolvT  Int
   R08SolvA  Int
   R08SolvM  Int
@@ -244,25 +261,32 @@ model R08EvaluacionResumenFase2 {
   R08FSeg   String
   R08Ev_por String       @db.Uuid
 
-  prestamo  R01Prestamo @relation(fields: [R08P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R08P_id], references: [R01Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R08Ev_por], references: [R12Id])
+
+  @@unique([R08P_id])
+  @@index([R08Ev_por])
 }
 
 model R09EvaluacionFase3 {
   R09Id    String     @id @default(uuid()) @db.Uuid
-  R09P_num String     @db.Char(8)
+  R09P_id  String     @db.Uuid
   R09E_id  String     @db.Uuid
   R09Res   ResFaseIII
   R09Ev_en String
 
+  prestamo R01Prestamo @relation(fields: [R09P_id], references: [R01Id], onDelete: Cascade)
   elemento R04Elemento @relation(fields: [R09E_id], references: [R04Id], onDelete: Cascade)
-  prestamo R01Prestamo @relation(fields: [R09P_num], references: [R01NUM], onDelete: Cascade)
 
   R12Usuario R12Usuario[]
+
+  @@unique([R09P_id, R09E_id])
+  @@index([R09P_id])
 }
 
 model R10EvaluacionResumenFase3 {
-  R10P_num      String       @id @db.Char(8)
+  R10Id         String       @id @default(uuid()) @db.Uuid
+  R10P_id       String       @db.Uuid
   R10Ha         Int
   R10Pendientes Int
   R10Rc         Int
@@ -272,9 +296,12 @@ model R10EvaluacionResumenFase3 {
   R10Ev_por     String       @db.Uuid
   R10Sup        String       @db.Uuid
 
-  prestamo   R01Prestamo @relation(fields: [R10P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo   R01Prestamo @relation(fields: [R10P_id], references: [R01Id], onDelete: Cascade)
   evaluador  R12Usuario  @relation(fields: [R10Ev_por], references: [R12Id])
   supervisor R12Usuario  @relation("SupervisorFase3", fields: [R10Sup], references: [R12Id])
+
+  @@unique([R10P_id])
+  @@index([R10Ev_por])
 }
 
 model R11Sucursal {
@@ -368,19 +395,23 @@ model R14Categoria {
 }
 
 model R15EvaluacionFase4 {
-  R15Id    String    @id @default(uuid()) @db.Uuid
-  R15P_num String    @db.Char(8)
-  R15E_id  String    @db.Uuid
-  R15Res   ResFaseII
+  R15Id   String    @id @default(uuid()) @db.Uuid
+  R15P_id String    @db.Uuid
+  R15E_id String    @db.Uuid
+  R15Res  ResFaseII
 
+  prestamo R01Prestamo @relation(fields: [R15P_id], references: [R01Id], onDelete: Cascade)
   elemento R04Elemento @relation(fields: [R15E_id], references: [R04Id], onDelete: Cascade)
-  prestamo R01Prestamo @relation(fields: [R15P_num], references: [R01NUM], onDelete: Cascade)
 
   R12Usuario R12Usuario[]
+
+  @@unique([R15P_id, R15E_id])
+  @@index([R15P_id])
 }
 
 model R16EvaluacionResumenFase4 {
-  R16P_num  String       @id @db.Char(8)
+  R16Id     String       @id @default(uuid()) @db.Uuid
+  R16P_id   String       @db.Uuid
   R16SolvT  Int
   R16SolvA  Int
   R16SolvM  Int
@@ -395,8 +426,11 @@ model R16EvaluacionResumenFase4 {
   R16FGlo   String
   R16Ev_por String       @db.Uuid
 
-  prestamo  R01Prestamo @relation(fields: [R16P_num], references: [R01NUM], onDelete: Cascade)
+  prestamo  R01Prestamo @relation(fields: [R16P_id], references: [R01Id], onDelete: Cascade)
   evaluador R12Usuario  @relation(fields: [R16Ev_por], references: [R12Id])
+
+  @@unique([R16P_id])
+  @@index([R16Ev_por])
 }
 
 model R18LimitePrudencial {
@@ -854,7 +888,6 @@ model C03CooperativaSubModulo {
 
   @@unique([C03CoopModuloId, C03SubModuloId])
 }
-
 
 // * ACTIVITY-LOG-MS
 enum AuditAction {
