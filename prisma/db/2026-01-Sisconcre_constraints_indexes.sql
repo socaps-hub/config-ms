@@ -3,40 +3,38 @@
 -- Escenario: tablas truncadas (sin datos)
 -- ============================================================
 
-BEGIN;
-
 -- ============================================================
 -- 1) R01Prestamo
 -- ============================================================
 
--- PK técnica (UUID)
-ALTER TABLE "R01Prestamo"
-  ADD CONSTRAINT "pk_R01Prestamo"
-  PRIMARY KEY ("R01Id");
+-- 1) Eliminar PK antiguo (normalmente sobre R01NUM)
+-- ALTER TABLE "R01Prestamo"
+--   DROP CONSTRAINT "R01Prestamo_pkey" CASCADE;
 
--- Clave de negocio
-ALTER TABLE "R01Prestamo"
-  ADD CONSTRAINT "uq_R01Prestamo_NUM_COOP"
-  UNIQUE ("R01NUM", "R01Coop_id");
+-- 2) Crear PK nuevo sobre R01Id
+-- ALTER TABLE "R01Prestamo"
+--   ADD CONSTRAINT "pk_R01Prestamo"
+--   PRIMARY KEY ("R01Id");
 
-COMMIT;
+-- -- 3) Clave de negocio
+-- ALTER TABLE "R01Prestamo"
+--   ADD CONSTRAINT "uq_R01Prestamo_NUM_COOP"
+--   UNIQUE ("R01NUM", "R01Coop_id");
 
--- Índices de acceso frecuente
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R01Prestamo_Coop"
-  ON "R01Prestamo" ("R01Coop_id");
+-- -- Índices de acceso
+-- CREATE INDEX IF NOT EXISTS "idx_R01Prestamo_Coop"
+--   ON "R01Prestamo" ("R01Coop_id");
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R01Prestamo_Suc"
-  ON "R01Prestamo" ("R01Suc_id");
+-- CREATE INDEX IF NOT EXISTS "idx_R01Prestamo_Suc"
+--   ON "R01Prestamo" ("R01Suc_id");
 
 -- ============================================================
 -- 2) Fase 1
 -- ============================================================
 
-BEGIN;
-
-ALTER TABLE "R05EvaluacionFase1"
-  ADD CONSTRAINT "pk_R05EvaluacionFase1"
-  PRIMARY KEY ("R05Id");
+-- ALTER TABLE "R05EvaluacionFase1"
+--   ADD CONSTRAINT "pk_R05EvaluacionFase1"
+--   PRIMARY KEY ("R05Id");
 
 ALTER TABLE "R05EvaluacionFase1"
   ADD CONSTRAINT "uq_R05_Pid_Eid"
@@ -48,18 +46,14 @@ ALTER TABLE "R05EvaluacionFase1"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R05_Pid"
+CREATE INDEX IF NOT EXISTS "idx_R05_Pid"
   ON "R05EvaluacionFase1" ("R05P_id");
 
 -- -------- Resumen F1 --------
 
-BEGIN;
-
-ALTER TABLE "R06EvaluacionResumenFase1"
-  ADD CONSTRAINT "pk_R06EvaluacionResumenFase1"
-  PRIMARY KEY ("R06Id");
+-- ALTER TABLE "R06EvaluacionResumenFase1"
+--   ADD CONSTRAINT "pk_R06EvaluacionResumenFase1"
+--   PRIMARY KEY ("R06Id");
 
 ALTER TABLE "R06EvaluacionResumenFase1"
   ADD CONSTRAINT "uq_R06_Pid"
@@ -71,20 +65,16 @@ ALTER TABLE "R06EvaluacionResumenFase1"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R06_EvPor"
+CREATE INDEX IF NOT EXISTS "idx_R06_EvPor"
   ON "R06EvaluacionResumenFase1" ("R06Ev_por");
 
 -- ============================================================
 -- 3) Fase 2
 -- ============================================================
 
-BEGIN;
-
-ALTER TABLE "R07EvaluacionFase2"
-  ADD CONSTRAINT "pk_R07EvaluacionFase2"
-  PRIMARY KEY ("R07Id");
+-- ALTER TABLE "R07EvaluacionFase2"
+--   ADD CONSTRAINT "pk_R07EvaluacionFase2"
+--   PRIMARY KEY ("R07Id");
 
 ALTER TABLE "R07EvaluacionFase2"
   ADD CONSTRAINT "uq_R07_Pid_Eid"
@@ -96,18 +86,14 @@ ALTER TABLE "R07EvaluacionFase2"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R07_Pid"
+CREATE INDEX IF NOT EXISTS "idx_R07_Pid"
   ON "R07EvaluacionFase2" ("R07P_id");
 
 -- -------- Resumen F2 --------
 
-BEGIN;
-
-ALTER TABLE "R08EvaluacionResumenFase2"
-  ADD CONSTRAINT "pk_R08EvaluacionResumenFase2"
-  PRIMARY KEY ("R08Id");
+-- ALTER TABLE "R08EvaluacionResumenFase2"
+--   ADD CONSTRAINT "pk_R08EvaluacionResumenFase2"
+--   PRIMARY KEY ("R08Id");
 
 ALTER TABLE "R08EvaluacionResumenFase2"
   ADD CONSTRAINT "uq_R08_Pid"
@@ -119,20 +105,17 @@ ALTER TABLE "R08EvaluacionResumenFase2"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R08_EvPor"
+CREATE INDEX IF NOT EXISTS "idx_R08_EvPor"
   ON "R08EvaluacionResumenFase2" ("R08Ev_por");
 
 -- ============================================================
 -- 4) Fase 3
 -- ============================================================
 
-BEGIN;
-
-ALTER TABLE "R09EvaluacionFase3"
-  ADD CONSTRAINT "pk_R09EvaluacionFase3"
-  PRIMARY KEY ("R09Id");
+-- ALTER TABLE "R09EvaluacionFase3"
+--   ADD CONSTRAINT "pk_R09EvaluacionFase3"
+--   PRIMARY KEY ("R09Id");
 
 ALTER TABLE "R09EvaluacionFase3"
   ADD CONSTRAINT "uq_R09_Pid_Eid"
@@ -144,18 +127,14 @@ ALTER TABLE "R09EvaluacionFase3"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R09_Pid"
+CREATE INDEX IF NOT EXISTS "idx_R09_Pid"
   ON "R09EvaluacionFase3" ("R09P_id");
 
 -- -------- Resumen F3 --------
 
-BEGIN;
-
-ALTER TABLE "R10EvaluacionResumenFase3"
-  ADD CONSTRAINT "pk_R10EvaluacionResumenFase3"
-  PRIMARY KEY ("R10Id");
+-- ALTER TABLE "R10EvaluacionResumenFase3"
+--   ADD CONSTRAINT "pk_R10EvaluacionResumenFase3"
+--   PRIMARY KEY ("R10Id");
 
 ALTER TABLE "R10EvaluacionResumenFase3"
   ADD CONSTRAINT "uq_R10_Pid"
@@ -167,20 +146,16 @@ ALTER TABLE "R10EvaluacionResumenFase3"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R10_EvPor"
+CREATE INDEX IF NOT EXISTS "idx_R10_EvPor"
   ON "R10EvaluacionResumenFase3" ("R10Ev_por");
 
 -- ============================================================
 -- 5) Fase 4
 -- ============================================================
 
-BEGIN;
-
-ALTER TABLE "R15EvaluacionFase4"
-  ADD CONSTRAINT "pk_R15EvaluacionFase4"
-  PRIMARY KEY ("R15Id");
+-- ALTER TABLE "R15EvaluacionFase4"
+--   ADD CONSTRAINT "pk_R15EvaluacionFase4"
+--   PRIMARY KEY ("R15Id");
 
 ALTER TABLE "R15EvaluacionFase4"
   ADD CONSTRAINT "uq_R15_Pid_Eid"
@@ -192,18 +167,14 @@ ALTER TABLE "R15EvaluacionFase4"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R15_Pid"
+CREATE INDEX IF NOT EXISTS "idx_R15_Pid"
   ON "R15EvaluacionFase4" ("R15P_id");
 
 -- -------- Resumen F4 --------
 
-BEGIN;
-
-ALTER TABLE "R16EvaluacionResumenFase4"
-  ADD CONSTRAINT "pk_R16EvaluacionResumenFase4"
-  PRIMARY KEY ("R16Id");
+-- ALTER TABLE "R16EvaluacionResumenFase4"
+--   ADD CONSTRAINT "pk_R16EvaluacionResumenFase4"
+--   PRIMARY KEY ("R16Id");
 
 ALTER TABLE "R16EvaluacionResumenFase4"
   ADD CONSTRAINT "uq_R16_Pid"
@@ -215,9 +186,7 @@ ALTER TABLE "R16EvaluacionResumenFase4"
   REFERENCES "R01Prestamo" ("R01Id")
   ON DELETE CASCADE;
 
-COMMIT;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_R16_EvPor"
+CREATE INDEX IF NOT EXISTS "idx_R16_EvPor"
   ON "R16EvaluacionResumenFase4" ("R16Ev_por");
 
 -- ============================================================
