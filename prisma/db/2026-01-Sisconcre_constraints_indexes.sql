@@ -18,7 +18,7 @@
 
 -- -- 3) Clave de negocio
 -- ALTER TABLE "R01Prestamo"
---   ADD CONSTRAINT "uq_R01Prestamo_NUM_COOP"
+--   ADD CONSTRAINT "R01NUM_R01Coop_id"
 --   UNIQUE ("R01NUM", "R01Coop_id");
 
 -- -- Índices de acceso
