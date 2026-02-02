@@ -8,6 +8,7 @@ import { M01ControlMigracion } from './entities/control-migracion.entity';
 import { ExcelUtils } from 'src/common/excel/utils/excel.utils';
 import { RpcException } from '@nestjs/microservices';
 import { GrupoTipo } from 'src/common/enums/grupo-type-enum';
+import { formatYYYYMMDD, getFechaMexicoISO } from 'src/common/excel/utils/date.util';
 
 @Injectable()
 export class MigracionService extends PrismaClient implements OnModuleInit {
@@ -57,7 +58,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         // Convertir fecha a ISOString para ajustar al schema GraphQL
         return migraciones.map((m) => ({
             ...m,
-            M01Fecha: m.M01Fecha.toISOString(),
+            M01Fecha: formatYYYYMMDD(m.M01Fecha),
         }));
     }
 
@@ -76,7 +77,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
         return {
             ...migracion,
-            M01Fecha: migracion.M01Fecha.toISOString(),
+            M01Fecha: formatYYYYMMDD(migracion.M01Fecha),
             M01Log: migracion.M01Log ?? undefined
         };
     }
@@ -511,7 +512,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 R05E_id: elemento.R04Id,
                 R05Res: resultado,
                 R05Ev_por: supervisorId,
-                R05Ev_en: new Date().toISOString(),
+                R05Ev_en: getFechaMexicoISO(),
             });
         }
 
