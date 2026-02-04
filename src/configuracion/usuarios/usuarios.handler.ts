@@ -114,7 +114,7 @@ export class UsuariosHandler {
     @ActivityLog({
         service: 'config-ms',
         module: 'usuarios',
-        action: AuditActionEnum.UPDATE,
+        action: AuditActionEnum.PASSWORD_CHANGE,
         eventName: 'config.usuarios.changePassword',
         operationName: 'CHANGE_PASSWORD',
         entities: [
