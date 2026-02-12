@@ -466,6 +466,8 @@ model R19Movimientos {
   evaluacionResumenFase1 R21EvaluacionResumenFase1?
   evaluacionResumenFase2 R23EvaluacionResumenFase2?
   evaluacionResumenFase3 R25EvaluacionResumenFase3?
+
+  @@index([R19Coop_id])
 }
 
 model R20EvaluacionFase1Sisconcap {
@@ -475,6 +477,8 @@ model R20EvaluacionFase1Sisconcap {
   R20Res   ResFaseI @default(NA)
 
   movimiento R19Movimientos @relation(fields: [R20Folio], references: [R19Folio], onDelete: Cascade)
+
+  @@index([R20Folio])
 }
 
 model R21EvaluacionResumenFase1 {
@@ -489,6 +493,8 @@ model R21EvaluacionResumenFase1 {
   movimiento R19Movimientos @relation(fields: [R21Folio], references: [R19Folio], onDelete: Cascade)
   supervisor R12Usuario     @relation("Supervisor", fields: [R21SP_id], references: [R12Id])
   ejecutivo  R12Usuario     @relation("Ejecutivo", fields: [R21Ejvo_id], references: [R12Id])
+
+  @@index([R21Folio])
 }
 
 model R22EvaluacionFase2Sisconcap {
@@ -498,6 +504,8 @@ model R22EvaluacionFase2Sisconcap {
   R22Res   ResFaseII @default(NA)
 
   movimiento R19Movimientos @relation(fields: [R22Folio], references: [R19Folio], onDelete: Cascade)
+
+  @@index([R22Folio])
 }
 
 model R23EvaluacionResumenFase2 {
@@ -512,6 +520,8 @@ model R23EvaluacionResumenFase2 {
 
   movimiento R19Movimientos @relation(fields: [R23Folio], references: [R19Folio], onDelete: Cascade)
   supervisor R12Usuario     @relation("Supervisor", fields: [R23SP_id], references: [R12Id])
+
+  @@index([R23Folio])
 }
 
 model R24EvaluacionFase3Sisconcap {
@@ -521,6 +531,8 @@ model R24EvaluacionFase3Sisconcap {
   R24Res   ResFaseII @default(NA)
 
   movimiento R19Movimientos @relation(fields: [R24Folio], references: [R19Folio], onDelete: Cascade)
+
+  @@index([R24Folio])
 }
 
 model R25EvaluacionResumenFase3 {
@@ -535,6 +547,8 @@ model R25EvaluacionResumenFase3 {
 
   movimiento R19Movimientos @relation(fields: [R25Folio], references: [R19Folio], onDelete: Cascade)
   supervisor R12Usuario     @relation("Supervisor", fields: [R25SP_id], references: [R12Id])
+
+  @@index([R25Folio])
 }
 
 // * RADIOGRAFIAS
