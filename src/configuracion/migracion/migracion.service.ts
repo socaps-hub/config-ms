@@ -2233,6 +2233,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 m.R19Cag,
                 m.R19Suc_id,
                 m.R19FMov,
+                m.R19TipoMov,
             );
             mapaMovimientos.set(key, m);
         });
@@ -2271,17 +2272,20 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             throw new Error('Fecha Movimiento vacía o inválida');
                         }
 
+                        const tipoMov = row['Tipo Movimiento']?.toString().trim() ?? ''
+
                         // 5.4 Buscar movimiento F1 por clave compuesta
                         const claveMov = this._claveMovimientoComposite(
                             cag,
                             suc.R11Id,
                             fMov,
+                            tipoMov,
                         );
 
                         const movimiento = mapaMovimientos.get(claveMov);
                         if (!movimiento) {
                             throw new Error(
-                                `Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}`,
+                                `Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}, TMov=${ tipoMov }`,
                             );
                         }
 
@@ -2395,12 +2399,14 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         cag: string,
         sucursalId: string,
         fechaMov: string,
+        tipoMov: string
     ): string {
         const c = (cag ?? '').toString().trim().toUpperCase();
         const s = (sucursalId ?? '').toString().trim().toUpperCase();
         const f = (fechaMov ?? '').toString().trim();
+        const t = (tipoMov ?? '').toString().trim().toUpperCase();
 
-        return `${c}_${s}_${f}`;
+        return `${c}_${s}_${f}_${t}`;
     }
 
     private async _crearEvaluacionesR22Sisconcap(
@@ -2597,6 +2603,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 m.R19Cag,
                 m.R19Suc_id,
                 m.R19FMov,
+                m.R19TipoMov,
             );
             mapaMovimientos.set(key, m);
         });
@@ -2640,17 +2647,20 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         throw new Error('Fecha Movimiento vacía o inválida');
                     }
 
+                    const tipoMov = row['Tipo Movimiento']?.toString().trim() ?? ''
+
                     // Clave compuesta para encontrar movimiento existente
                     const clave = this._claveMovimientoComposite(
                         cag,
                         suc.R11Id,
                         fMov,
+                        tipoMov
                     );
 
                     const movimiento = mapaMovimientos.get(clave);
                     if (!movimiento) {
                         throw new Error(
-                            `   Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${suc}, FMov=${fMov}`,
+                            `   Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${suc}, FMov=${fMov}, TMov=${tipoMov}`,
                         );
                     }
 
