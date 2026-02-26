@@ -453,6 +453,7 @@ model R19Movimientos {
   R19FRev           String
   R19Est            String
   R19Coop_id        String     @db.Uuid
+  R19MId            String?
   R19Creado_en      DateTime   @default(now())
   R19Actualizado_en DateTime   @updatedAt
 

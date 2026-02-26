@@ -1822,7 +1822,22 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             });
 
             // 3️⃣ Precargar catálogos
-            const [sucursales, usuarios, elementosSisconcap] = await this.$transaction([
+            // Conjunto de préstamos que vienen en el Excel
+            const movimientosMIds = new Set<string>();
+            for (const row of rows) {
+                const mId = row['MID']?.toString() ?? '';
+                if (!mId) continue;
+                movimientosMIds.add(mId);
+            }
+            const movsMIds = Array.from(movimientosMIds);
+
+            const [movimientos, sucursales, usuarios, elementosSisconcap] = await this.$transaction([
+                this.r19Movimientos.findMany({
+                    where: {
+                        R19Coop_id: cooperativaId,
+                        R19MId: { in: movsMIds }
+                    }
+                }),
                 this.r11Sucursal.findMany({
                     where: { R11Coop_id: cooperativaId },
                 }),
@@ -1842,6 +1857,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
             ]);
 
             // 4️⃣ Construir mapas para lookups O(1)
+
+            // Movimiento por MId
+            const mapaMovimientos = new Map<string, (typeof movimientos)[0]>();
+            movimientos.forEach((p) => {
+                if(!p.R19MId) return
+                mapaMovimientos.set(p.R19MId, p);
+            });
 
             // sucursalNum (ej. "01") → sucursal
             const mapaSucursales = new Map<string, (typeof sucursales)[0]>();
@@ -1881,7 +1903,10 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                                 row,
                                 cooperativaId,
                                 tx,
-                                { mapaSucursales },
+                                { 
+                                    mapaMovimientos,
+                                    mapaSucursales,
+                                },
                             );
 
                             const folio = movimiento.R19Folio;
@@ -1973,10 +1998,21 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         cooperativaId: string,
         tx: any,
         maps: {
+            mapaMovimientos: Map<string, any>;
             mapaSucursales: Map<string, any>;
         }
     ) {
-        const { mapaSucursales } = maps;
+        const { mapaMovimientos, mapaSucursales } = maps;
+
+        // ---------------------------
+        // a) Validar que NO exista ya un movimiento en R19 con el mismo MId
+        // ---------------------------
+        const mId = row['MID']?.toString() ?? '';
+
+        const movimientoInDB = mapaMovimientos.get(mId);
+        if (movimientoInDB) {
+            throw new Error(`Movimiento con MId (${movimientoInDB.R19MId}) ya existente`);
+        }
 
         // 1) Sucursal
         const sucursalNum = row['Sucursal']?.toString().trim() ?? '';
@@ -1999,6 +2035,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         // 3) Crear R19Movimientos
         const movimiento = await tx.r19Movimientos.create({
             data: {
+                R19MId: mId,
                 R19Cag: cag,
                 R19Nom: nombre,
                 R19Figura: figura as Figura,
@@ -2229,13 +2266,8 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         // (CAG + sucursalId + FMov) → movimiento
         const mapaMovimientos = new Map<string, (typeof movimientos)[0]>();
         movimientos.forEach((m) => {
-            const key = this._claveMovimientoComposite(
-                m.R19Cag,
-                m.R19Suc_id,
-                m.R19FMov,
-                m.R19TipoMov,
-            );
-            mapaMovimientos.set(key, m);
+            if (!m.R19MId) return
+            mapaMovimientos.set(m.R19MId, m);
         });
 
         let correctos = 0;
@@ -2273,19 +2305,12 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                         }
 
                         const tipoMov = row['Tipo Movimiento']?.toString().trim() ?? ''
+                        const mId = row['MID']?.toString().trim() ?? ''
 
-                        // 5.4 Buscar movimiento F1 por clave compuesta
-                        const claveMov = this._claveMovimientoComposite(
-                            cag,
-                            suc.R11Id,
-                            fMov,
-                            tipoMov,
-                        );
-
-                        const movimiento = mapaMovimientos.get(claveMov);
+                        const movimiento = mapaMovimientos.get(mId);
                         if (!movimiento) {
                             throw new Error(
-                                `Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}, TMov=${ tipoMov }`,
+                                `Movimiento F1 no encontrado para MId=${mId} CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}, TMov=${ tipoMov }`,
                             );
                         }
 
@@ -2395,19 +2420,19 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
      * Construye la clave única del movimiento:
      *  CAG + SucursalId + FechaMovimiento
      */
-    private _claveMovimientoComposite(
-        cag: string,
-        sucursalId: string,
-        fechaMov: string,
-        tipoMov: string
-    ): string {
-        const c = (cag ?? '').toString().trim().toUpperCase();
-        const s = (sucursalId ?? '').toString().trim().toUpperCase();
-        const f = (fechaMov ?? '').toString().trim();
-        const t = (tipoMov ?? '').toString().trim().toUpperCase();
+    // private _claveMovimientoComposite(
+    //     cag: string,
+    //     sucursalId: string,
+    //     fechaMov: string,
+    //     tipoMov: string
+    // ): string {
+    //     const c = (cag ?? '').toString().trim().toUpperCase();
+    //     const s = (sucursalId ?? '').toString().trim().toUpperCase();
+    //     const f = (fechaMov ?? '').toString().trim();
+    //     const t = (tipoMov ?? '').toString().trim().toUpperCase();
 
-        return `${c}_${s}_${f}_${t}`;
-    }
+    //     return `${c}_${s}_${f}_${t}`;
+    // }
 
     private async _crearEvaluacionesR22Sisconcap(
         row: any,
@@ -2599,13 +2624,8 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         // Movimientos (clave compuesta)
         const mapaMovimientos = new Map<string, (typeof movimientosF1)[0]>();
         movimientosF1.forEach((m) => {
-            const key = this._claveMovimientoComposite(
-                m.R19Cag,
-                m.R19Suc_id,
-                m.R19FMov,
-                m.R19TipoMov,
-            );
-            mapaMovimientos.set(key, m);
+            if (!m.R19MId) return
+            mapaMovimientos.set(m.R19MId, m);
         });
 
         // Resúmenes F2 (para R23PSolv)
@@ -2649,23 +2669,17 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                     const tipoMov = row['Tipo Movimiento']?.toString().trim() ?? ''
 
-                    // Clave compuesta para encontrar movimiento existente
-                    const clave = this._claveMovimientoComposite(
-                        cag,
-                        suc.R11Id,
-                        fMov,
-                        tipoMov
-                    );
+                    const mId = row['MID']?.toString().trim() ?? ''
 
-                    const movimiento = mapaMovimientos.get(clave);
+                    const movimiento = mapaMovimientos.get(mId);
                     if (!movimiento) {
                         throw new Error(
-                            `   Movimiento F1 no encontrado para CAG=${cag}, Sucursal=${suc}, FMov=${fMov}, TMov=${tipoMov}`,
+                            `   Movimiento F1 no encontrado para MID=${mId} CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}, TMov=${tipoMov}`,
                         );
                     }
 
                     const resumenF2 = mapaResF2.get(movimiento.R19Folio);
-                    if (!resumenF2) throw new Error(`No existe resumen F2 para el folio ${movimiento.R19Folio}`);
+                    if (!resumenF2) throw new Error(`No existe resumen F2 para MID ${mId} CAG=${cag}, Sucursal=${sucursalNum}, FMov=${fMov}, TMov=${tipoMov}`);
 
                     // Supervisor
                     const supervisorNi = row['Clave Supervisor']?.toString().trim() ?? '';
