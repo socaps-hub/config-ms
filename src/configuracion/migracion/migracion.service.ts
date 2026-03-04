@@ -1913,7 +1913,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
 
                             // b) Buscar Supervisor y Ejecutivo por NI
                             const supervisorNi = row['Clave Supervisor']?.toString().trim() ?? '';
-                            const ejecutivoNi = row['Clave Usuario']?.toString().trim() ?? '';
+                            const ejecutivoNi = row['Clave Usuario']?.toString().trim() ?? '';                            
 
                             const supervisor = mapaUsuarios.get(supervisorNi.toUpperCase());
                             if (!supervisor) {
@@ -1934,12 +1934,15 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             );
 
                             // d) Crear resumen R21
+                            const observaciones = row['Observaciones']?.toString().trim() ?? '';
+
                             await this.crearResumenR21SisconcapF1(
                                 folio,
                                 tx,
                                 { Ha, Rc },
                                 supervisor.R12Id,
                                 ejecutivo.R12Id,
+                                observaciones,
                             );
                         },
                         { timeout: 20_000 },
@@ -2128,6 +2131,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         counters: { Ha: number; Rc: number },
         supervisorId: string,
         ejecutivoId: string,
+        observaciones: string,
     ) {
         const { Ha, Rc } = counters;
 
@@ -2139,7 +2143,7 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                 R21Ha: Ha,
                 R21Rc: Rc,
                 R21Cal: cal,
-                R21Obs: '',
+                R21Obs: observaciones,
                 R21SP_id: supervisorId,
                 R21Ejvo_id: ejecutivoId,
             },
