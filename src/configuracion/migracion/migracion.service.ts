@@ -286,11 +286,13 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
                             // ---------------------------
                             // c) Crear R06 (resumen) REUSANDO los contadores ya calculados
                             // ---------------------------
+                            const pasoDirecto = row['Directo a Seguimiento']?.toString() ?? ''
                             await this.crearResumenR06(
                                 prestamo.R01Id,
                                 tx,
                                 supervisor.R12Id,
                                 { Ha, Hm, Hb, Rc },
+                                pasoDirecto,
                             );
                         },
                         { timeout: 20_000 }, // timeout razonable por fila
@@ -535,11 +537,15 @@ export class MigracionService extends PrismaClient implements OnModuleInit {
         tx: any,
         supervisorId: string,
         counters: { Ha: number; Hm: number; Hb: number; Rc: number },
+        pasoDirecto: string
     ) {
         const { Ha, Hm, Hb, Rc } = counters;
 
+        const pasoDirectoFormatted = pasoDirecto.trim().toUpperCase()
         const calificativo = this._obtenerCalificativo(Ha, Hm, Hb);
-        const resolucion = calificativo !== 'DEFICIENTE' ? 'PASA_COMITE' : 'DEVUELTA';
+        const resolucion =  
+            pasoDirectoFormatted === 'SI' ? 'PASA_COMITE' 
+                : calificativo !== 'DEFICIENTE' ? 'PASA_COMITE' : 'DEVUELTA';
 
         return tx.r06EvaluacionResumenFase1.create({
             data: {
