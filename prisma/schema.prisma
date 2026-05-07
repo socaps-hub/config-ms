@@ -566,8 +566,8 @@ model C01ControlCarga {
   creditos    RA01Credito[]
   cooperativa R17Cooperativas @relation(fields: [C01CooperativaCodigo], references: [R17Id], onDelete: Cascade)
 
-  @@unique([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
-  @@index([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio])
+  @@unique([C01CooperativaCodigo, C01PeriodoMes, C01PeriodoAnio, C01Area])
+  @@index([C01CooperativaCodigo, C01Area, C01PeriodoAnio, C01PeriodoMes])
 }
 
 // RADIOGRAFIA DE CRÉDITO

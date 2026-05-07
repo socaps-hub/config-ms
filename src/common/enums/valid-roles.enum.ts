@@ -9,6 +9,7 @@ export enum ValidRoles {
     auditor = 'auditor',
     auditorSelector = 'auditor-selector',
     auditorAdmin = 'auditor-admin',
+    operativo = 'operativo',
 
 }
 
