@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, RADIO_AREA } from '@prisma/client';
 import { ControlCargaRadiografiasResponse } from './dto/outputs/control-carga-radiografias-response.output';
 
 @Injectable()
@@ -23,6 +23,7 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
         _count: {
           select: {
             creditos: true,
+            captaciones: true,
           },
         },
       },
@@ -31,7 +32,7 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
       },
     });
 
-    const cargasMapped = cargas.map(c => ({
+    const cargasMapped = cargas.map((c) => ({
       C01Id: c.C01Id,
       C01CooperativaCodigo: c.C01CooperativaCodigo,
       C01CooperativaNombre: c.cooperativa.R17Nom,
@@ -41,34 +42,31 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
       C01PeriodoAnio: c.C01PeriodoAnio,
       C01Area: c.C01Area,
 
-      // 👇 contador eficiente
-      totalCreditos: c._count.creditos,
+      totalRegistros: this._getTotalRegistros(c.C01Area, c._count),
     }));
 
-    return { cargas: cargasMapped };
+    return {
+      cargas: cargasMapped,
+    };
   }
 
- /**
-   * 🧾 Crea un nuevo registro en C01ControlCarga
-   * No valida duplicados: las cargas se acumulan mes a mes.
-   */
-  // async createControlCarga(input: CreateC01ControlCargaInput): Promise<C01ControlCarga> {
-  //   const { C01CooperativaCodigo, C01Archivo } = input;
+  private _getTotalRegistros(
+    area: RADIO_AREA,
+    counts: {
+      creditos: number;
+      captaciones: number;
+    },
+  ): number {
+    switch (area) {
+      case RADIO_AREA.CREDITO:
+        return counts.creditos;
 
-  //   const newRecord = await this.c01ControlCarga.create({
-  //     data: {
-  //       C01CooperativaCodigo,
-  //       C01Archivo: C01Archivo ?? '',
-  //       C01FechaCarga: new Date(),
-  //       C01PeriodoMes: new Date().getMonth() + 1,
-  //       C01PeriodoAnio: new Date().getFullYear(),
-  //     },
-  //   });
+      case RADIO_AREA.CAPTACION:
+        return counts.captaciones;
 
-  //   return {
-  //     ...newRecord,
-  //     C01Archivo: newRecord.C01Archivo ?? undefined,
-  //   };
-  // }
+      default:
+        return 0;
+    }
+  }
 
 }

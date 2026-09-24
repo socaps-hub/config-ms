@@ -1,11 +1,12 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { PrismaClient } from '@prisma/client';
-import { FileUpload } from 'graphql-upload-ts';
 
 import { CreateRA01CreditoInput } from './dto/inputs/create-radiografia-credito.input';
 import { ExcelService } from 'src/common/excel/services/excel.service';
 import { ExcelUtils } from 'src/common/excel/utils/excel.utils';
 import { RadioAreaEnum } from 'src/configuracion/control-carga-radiografias/enums/control-carga-radio-area.enum';
+import { CreateRA02CaptacionInput } from './dto/inputs/create-radiografia-captacion.input';
 
 const MESES_MAP: Record<string, number> = {
   'enero': 1,
@@ -30,6 +31,8 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
 
   private router = {
     CREDITO: this.parseFileAndBuildCreateRA01CreditoInput.bind(this),
+
+    CAPTACION: this.parseFileAndBuildCreateRA02CaptacionInput.bind(this),
   };
 
   constructor(private readonly excelService: ExcelService) {
@@ -46,17 +49,23 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
     cooperativaId: string,
     area: RadioAreaEnum,
   ) {
-    const keyDest = area;
-    const handler = this.router[keyDest];
+    const handler = this.router[area];
 
-    if (!handler)
-      throw new Error(`Carga no implementada para área: ${keyDest}`);
+    if (!handler) {
+      throw new RpcException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Carga no implementada para área: ${area}`,
+      });
+    }
 
     return handler(key, cooperativaId);
   }
 
+  // ===================================
+  // CREDITO
+  // ===================================
   /**
-   * 📘 Lee un archivo Excel desde una ruta física,
+   *  Lee un archivo Excel desde una ruta física,
    * lo convierte a CreateRA01CreditoInput[],
    * y ejecuta la carga masiva en la base de datos.
    */
@@ -71,7 +80,10 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
       const json = await this.excelService.readExcelAsJsonFromS3(key);
 
       if (!json || json.length === 0) {
-        throw new Error('El archivo Excel no contiene datos.');
+        throw new RpcException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'El archivo Excel no contiene datos.',
+        });
       }
 
       // 2️⃣ Convertir filas a CreateRA01CreditoInput[]
@@ -205,8 +217,7 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
       );
       return result;
     } catch (error) {
-      this._logger.error(`❌ Error procesando Excel: ${error.message}`);
-      throw error;
+      this._handleRpcError(error, 'Error procesando radiografía de Crédito');
     }
   }
 
@@ -220,19 +231,13 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
         this._getNumMesAndYearFromFileName(archivo);
 
       // 🔹 Validar si ya existe carga para ese periodo
-      const existeCarga = await this.c01ControlCarga.findFirst({
-        where: {
-          C01CooperativaCodigo: cooperativaCodigo,
-          C01PeriodoMes: periodoMes,
-          C01PeriodoAnio: periodoAnio,
-        },
-      });
-
-      if (existeCarga) {
-        throw new Error(
-          `Ya existe una carga para ${cooperativaCodigo} en ${nombreMes} (${periodoMes}/${periodoAnio}).`,
-        );
-      }
+      await this._validarCargaExistente(
+        cooperativaCodigo,
+        periodoMes,
+        periodoAnio,
+        RadioAreaEnum.CREDITO,
+        nombreMes,
+      );
 
       return await this.$transaction(
         async (tx) => {
@@ -254,14 +259,15 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
           const registros = creditos.map((c) => ({
             ...c,
             RA01ControlId: controlId,
-            RA01TotalCartera: this.calcularTotalCartera(c),
+            RA01TotalCartera: this._calcularTotalCartera(c),
           }));
 
           // Validación preventiva
           if (!registros.length) {
-            throw new Error(
-              'No se encontraron créditos válidos para insertar.',
-            );
+            throw new RpcException({
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: 'No se encontraron créditos válidos para insertar.',
+            });
           }
 
           // 3️⃣ Inserción masiva dentro de la misma transacción
@@ -271,9 +277,11 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
 
           // Validar inserción
           if (result.count === 0) {
-            throw new Error(
-              'No se insertó ningún registro en RA01Credito. Operación cancelada.',
-            );
+            throw new RpcException({
+              statusCode: HttpStatus.BAD_REQUEST,
+              message:
+                'No se insertó ningún registro en RA01Credito. Operación cancelada.',
+            });
           }
 
           this._logger.log(
@@ -288,19 +296,252 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
         { timeout: 30000 },
       );
     } catch (error) {
-      this._logger.error(
-        `❌ Error en carga masiva de radiografía: ${error.message}`,
+      this._handleRpcError(
+        error,
+        'Error en carga masiva de radiografía de Crédito',
       );
-      throw `❌ Error en carga masiva de radiografía: ${error.message}`;
+    }
+  }
+
+  // ===================================
+  // CAPTACION
+  // ===================================
+  public async parseFileAndBuildCreateRA02CaptacionInput(
+    key: string,
+    cooperativaCodigo: string,
+  ) {
+    try {
+      this._logger.log(`Leyendo radiografía de Captación desde: ${key}`);
+
+      // 1. Leer Excel desde S3
+      const json = await this.excelService.readExcelAsJsonFromS3(key);
+
+      if (!json || json.length === 0) {
+        throw new RpcException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'El archivo Excel no contiene datos.',
+        });
+      }
+
+      // 2. Convertir las filas del Excel al DTO de Captación
+      const captaciones: CreateRA02CaptacionInput[] = json.map((row) => ({
+        RA02Nombre: row['NOMBRE']?.toString().trim() ?? '',
+
+        RA02Sexo: row['SEXO']?.toString().trim() ?? '',
+
+        RA02Ocupacion: row['OCUPACION']?.toString().trim() ?? '',
+
+        RA02Escolaridad: row['ESCOLARIDAD']?.toString().trim() ?? '',
+
+        RA02Cag: row['CAG']?.toString().trim() ?? '',
+
+        RA02TipoPersona: row['TIPO PERSONA']?.toString().trim() ?? '',
+
+        RA02FechaIngreso: ExcelUtils.parseExcelDate(row['FECHA INGRESO']) ?? '',
+
+        RA02FechaNacimiento:
+          ExcelUtils.parseExcelDate(row['FECHA NACIMIENTO']) ?? '',
+
+        RA02FechaApertura:
+          ExcelUtils.parseExcelDate(row['FECHA APERTURA']) ?? '',
+
+        RA02Vencimiento: this._parseVencimientoCaptacion(row['VENCIMIENTO']),
+
+        RA02PlazoDias: Number(row['PLAZO EN DIAS'] ?? 0),
+
+        RA02TasaAnual: Number(row['TASA ANUAL'] ?? 0),
+
+        RA02SaldoCapital: Number(row['SALDO CAPITAL'] ?? 0),
+
+        RA02DevengadosPf: Number(row['DEVENGADOS PF'] ?? 0),
+
+        RA02SaldoTotal: Number(row['SALDO TOTAL'] ?? 0),
+
+        RA02Depositos: Number(row['DEPOSITOS'] ?? 0),
+
+        RA02Retiros: Number(row['RETIROS'] ?? 0),
+
+        RA02Sucursal: row['SUCURSAL']?.toString().trim() ?? '',
+
+        RA02Producto: row['PRODUCTO']?.toString().trim() ?? '',
+
+        RA02ClasificacionContable:
+          row['CLASIFICACION CONTABLE']?.toString().trim() ?? '',
+
+        RA02Riesgos: row['RIESGOS']?.toString().trim() ?? '',
+
+        RA02Direccion: row['DIRECCION']?.toString().trim() ?? '',
+
+        RA02Colonia: row['COLONIA']?.toString().trim() ?? '',
+
+        RA02Localidad: row['LOCALIDAD']?.toString().trim() ?? '',
+
+        RA02Municipio: row['MUNICIPIO']?.toString().trim() ?? '',
+
+        RA02Estado: row['ESTADO']?.toString().trim() ?? '',
+
+        RA02UsuarioApertura: row['USUARIO APERTURA']?.toString().trim() ?? '',
+
+        RA02Cuenta: row['CUENTA']?.toString().trim() ?? '',
+
+        RA02Relacion: row['RELACION']?.toString().trim() ?? '',
+
+        RA02Cargo: row['CARGO']?.toString().trim() ?? '',
+
+        RA02UltimoDeposito:
+          ExcelUtils.parseExcelDate(row['ULTIMO DEPOSITO']) ?? '',
+
+        RA02InteresDelMes: Number(row['INTERES DEL MES'] ?? 0),
+
+        RA02UltimoMovimiento:
+          ExcelUtils.parseExcelDate(row['ULTIMO MOVIMIENTO']) ?? '',
+      }));
+
+      if (!captaciones.length) {
+        throw new RpcException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message:
+            'No se encontraron registros de Captación válidos para procesar.',
+        });
+      }
+
+      // 3. Persistencia
+      const result = await this.crearCargaMasivaRadiografiaCaptacion(
+        cooperativaCodigo,
+        key.split('/').pop() ?? 'archivo.xlsx',
+        captaciones,
+      );
+
+      this._logger.log(
+        `✅ Carga de Captación completada: ${result.totalRegistros} registros insertados`,
+      );
+
+      return result;
+    } catch (error) {
+      this._handleRpcError(error, 'Error procesando radiografía de Captación');
+    }
+  }
+
+  async crearCargaMasivaRadiografiaCaptacion(
+    cooperativaCodigo: string,
+    archivo: string,
+    captaciones: CreateRA02CaptacionInput[],
+  ) {
+    try {
+      const { periodoMes, periodoAnio, nombreMes } =
+        this._getNumMesAndYearFromFileName(archivo);
+
+      await this._validarCargaExistente(
+        cooperativaCodigo,
+        periodoMes,
+        periodoAnio,
+        RadioAreaEnum.CAPTACION,
+        nombreMes,
+      );
+
+      return await this.$transaction(
+        async (tx) => {
+          // 1. Crear control de carga
+          const control = await tx.c01ControlCarga.create({
+            data: {
+              C01CooperativaCodigo: cooperativaCodigo,
+
+              C01Archivo: archivo,
+
+              C01FechaCarga: new Date(),
+
+              C01PeriodoMes: periodoMes,
+
+              C01PeriodoAnio: periodoAnio,
+
+              C01Area: RadioAreaEnum.CAPTACION,
+            },
+          });
+
+          const controlId = control.C01Id;
+
+          // 2. Asociar todos los registros
+          //    al control recién creado.
+          const registros = captaciones.map((captacion) => ({
+            ...captacion,
+            RA02ControlId: controlId,
+          }));
+
+          if (!registros.length) {
+            throw new RpcException({
+              statusCode: HttpStatus.BAD_REQUEST,
+              message:
+                'No se encontraron registros de Captación válidos para insertar.',
+            });
+          }
+
+          // 3. Inserción masiva
+          const result = await tx.rA02Captacion.createMany({
+            data: registros,
+          });
+
+          if (result.count === 0) {
+            throw new RpcException({
+              statusCode: HttpStatus.BAD_REQUEST,
+              message:
+                'No se insertó ningún registro en RA02Captacion. Operación cancelada.',
+            });
+          }
+
+          this._logger.log(
+            `✅ ${result.count} registros de Captación insertados para cooperativa ${cooperativaCodigo} (controlId: ${controlId})`,
+          );
+
+          return {
+            totalRegistros: result.count,
+            controlId,
+          };
+        },
+        {
+          timeout: 30000,
+        },
+      );
+    } catch (error) {
+      this._handleRpcError(
+        error,
+        'Error en carga masiva de radiografía de Captación',
+      );
+    }
+  }
+
+  // ====================================
+  // HELPERS
+  // ====================================
+  private async _validarCargaExistente(
+    cooperativaCodigo: string,
+    periodoMes: number,
+    periodoAnio: number,
+    area: RadioAreaEnum,
+    nombreMes: string,
+  ): Promise<void> {
+    const existeCarga = await this.c01ControlCarga.findFirst({
+      where: {
+        C01CooperativaCodigo: cooperativaCodigo,
+        C01PeriodoMes: periodoMes,
+        C01PeriodoAnio: periodoAnio,
+        C01Area: area,
+      },
+    });
+
+    if (existeCarga) {
+      throw new RpcException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Ya existe una carga de ${area} para ${cooperativaCodigo} en ${nombreMes} (${periodoMes}/${periodoAnio}).`,
+      });
     }
   }
 
   /**
-   * 🧮 Calcula el campo RA01TotalCartera
+   * Calcula el campo RA01TotalCartera
    * Suma: Interes Moratorio + Interes Moratorio Cartera Ve +
    *        Interes Normal + Saldo Capital Cart.Vig + Saldo Capital Cart.Ven
    */
-  private calcularTotalCartera(c: CreateRA01CreditoInput): number {
+  private _calcularTotalCartera(c: CreateRA01CreditoInput): number {
     const n = (v?: number) => (v ? Number(v) : 0);
     return (
       n(c.RA01InteresMoratorio) +
@@ -326,5 +567,37 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
     this._logger.log(`📅 Mes detectado: ${nombreMes} → ${periodoMes}`);
 
     return { periodoMes, periodoAnio, nombreMes };
+  }
+
+  private _parseVencimientoCaptacion(value: unknown): string {
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const parsedDate = ExcelUtils.parseExcelDate(value);
+
+    if (parsedDate) {
+      return parsedDate;
+    }
+
+    return String(value).trim();
+  }
+
+  private _handleRpcError(error: unknown, context: string): never {
+    if (error instanceof RpcException) {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    this._logger.error(
+      `${context}: ${message}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+
+    throw new RpcException({
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: `${context}: ${message}`,
+    });
   }
 }

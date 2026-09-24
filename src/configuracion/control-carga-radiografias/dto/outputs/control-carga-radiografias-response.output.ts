@@ -30,11 +30,11 @@ export class ControlCargaRadiografiaDto {
     C01Area: RADIO_AREA;
 
     // Relación inversa con RA01Credito
-    @Field(() => [RA01Credito], { nullable: true })
-    creditos?: RA01Credito[];
+    // @Field(() => [RA01Credito], { nullable: true })
+    // creditos?: RA01Credito[];
 
     @Field(() => Int)
-    totalCreditos: number;
+    totalRegistros: number;
 
 }
 
