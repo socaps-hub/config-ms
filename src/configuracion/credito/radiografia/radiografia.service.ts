@@ -7,6 +7,7 @@ import { ExcelService } from 'src/common/excel/services/excel.service';
 import { ExcelUtils } from 'src/common/excel/utils/excel.utils';
 import { RadioAreaEnum } from 'src/configuracion/control-carga-radiografias/enums/control-carga-radio-area.enum';
 import { CreateRA02CaptacionInput } from './dto/inputs/create-radiografia-captacion.input';
+import { CreateRA03AfiliacionInput } from './dto/inputs/create-radiografia-afiliacion.input';
 
 const MESES_MAP: Record<string, number> = {
   'enero': 1,
@@ -33,6 +34,8 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
     CREDITO: this.parseFileAndBuildCreateRA01CreditoInput.bind(this),
 
     CAPTACION: this.parseFileAndBuildCreateRA02CaptacionInput.bind(this),
+
+    AFILIACION: this.parseFileAndBuildCreateRA03AfiliacionInput.bind(this),
   };
 
   constructor(private readonly excelService: ExcelService) {
@@ -505,6 +508,144 @@ export class RadiografiaService extends PrismaClient implements OnModuleInit {
       this._handleRpcError(
         error,
         'Error en carga masiva de radiografía de Captación',
+      );
+    }
+  }
+
+  // ===================================
+  // AFILIACION
+  // ===================================
+  public async parseFileAndBuildCreateRA03AfiliacionInput(
+    key: string,
+    cooperativaCodigo: string,
+  ) {
+    try {
+      this._logger.log(`Leyendo radiografía de Afiliación desde: ${key}`);
+
+      // 1. Leer Excel desde S3
+      const json = await this.excelService.readExcelAsJsonFromS3(key);
+
+      if (!json || json.length === 0) {
+        throw new RpcException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'El archivo Excel no contiene datos.',
+        });
+      }
+
+      // 2. Convertir filas del Excel al DTO
+      const afiliaciones: CreateRA03AfiliacionInput[] = json.map((row) => ({
+        RA03Cag: row['CAG']?.toString().trim() ?? '',
+
+        RA03NombreSocio: row['NOMBRE DEL SOCIO']?.toString().trim() ?? '',
+
+        RA03Sexo: row['SEXO']?.toString().trim() ?? '',
+
+        RA03Ocupacion: row['OCUPACION']?.toString().trim() ?? '',
+
+        RA03Escolaridad: row['ESCOLARIDAD']?.toString().trim() ?? '',
+
+        RA03Riesgo: row['RIESGO']?.toString().trim() ?? '',
+
+        RA03Sucursal: row['SUCURSAL']?.toString().trim() ?? '',
+
+        RA03FechaPagoParteSocial:
+          ExcelUtils.parseExcelDate(row['FECHA PAGO PARTE SOCIAL']) ?? '',
+
+        RA03ParteSocialPagada: Number(row['PARTE SOCIAL PAGADA'] ?? 0),
+
+        RA03FechaRetiro:
+          ExcelUtils.parseExcelDate(row['FECHA DE RETIRO']) ?? '',
+
+        RA03Monto: Number(row['MONTO'] ?? 0),
+
+        RA03Monto2: Number(row['MONTO 2'] ?? 0),
+
+        RA03TipoPersona: row['TIPO PERSONA']?.toString().trim() ?? '',
+
+        RA03Anio: Number(row['Año'] ?? 0),
+      }));
+
+      if (!afiliaciones.length) {
+        throw new RpcException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message:
+            'No se encontraron registros de Afiliación válidos para procesar.',
+        });
+      }
+
+      // 3. Persistencia
+      const result = await this.crearCargaMasivaRadiografiaAfiliacion(
+        cooperativaCodigo,
+        key.split('/').pop() ?? 'archivo.xlsx',
+        afiliaciones,
+      );
+
+      this._logger.log(
+        `✅ Carga de Afiliación completada: ${result.totalRegistros} registros insertados`,
+      );
+
+      return result;
+    } catch (error) {
+      this._handleRpcError(error, 'Error procesando radiografía de Afiliación');
+    }
+  }
+
+  public async crearCargaMasivaRadiografiaAfiliacion(
+    cooperativaCodigo: string,
+    archivo: string,
+    afiliaciones: CreateRA03AfiliacionInput[],
+  ) {
+    try {
+      // 1. Obtener periodo a partir del nombre del archivo
+      const { periodoMes, periodoAnio, nombreMes } = this._getNumMesAndYearFromFileName(archivo);
+
+      // 2. Validar que no exista ya una carga de AFILIACION
+      await this._validarCargaExistente(
+        cooperativaCodigo,
+        periodoMes,
+        periodoAnio,
+        RadioAreaEnum.AFILIACION,
+        nombreMes,
+      );
+
+      // 3. Crear control + registros en una sola transacción
+      const result = await this.$transaction(async (tx) => {
+        const control = await tx.c01ControlCarga.create({
+          data: {
+            C01CooperativaCodigo: cooperativaCodigo,
+            C01Archivo: archivo,
+            C01PeriodoMes: periodoMes,
+            C01PeriodoAnio: periodoAnio,
+            C01Area: RadioAreaEnum.AFILIACION,
+          },
+        });
+
+        const afiliacionesConControl = afiliaciones.map((afiliacion) => ({
+          ...afiliacion,
+          RA03ControlId: control.C01Id,
+        }));
+
+        const createResult = await tx.rA03Afiliacion.createMany({
+          data: afiliacionesConControl,
+        });
+
+        return {
+          controlId: control.C01Id,
+          totalRegistros: createResult.count,
+        };
+      });
+
+      this._logger.log(
+        `Radiografía de Afiliación almacenada correctamente. ` +
+          `Control: ${result.controlId}, ` +
+          `registros: ${result.totalRegistros}`,
+      );
+
+      return result;
+    } catch (error) {
+      this._handleRpcError(
+        error,
+        'Error en carga masiva de radiografía de Afiliación',
       );
     }
   }

@@ -24,6 +24,7 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
           select: {
             creditos: true,
             captaciones: true,
+            afiliaciones: true,
           },
         },
       },
@@ -55,6 +56,7 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
     counts: {
       creditos: number;
       captaciones: number;
+      afiliaciones: number;
     },
   ): number {
     switch (area) {
@@ -63,6 +65,9 @@ export class ControlCargaRadiografiasService extends PrismaClient implements OnM
 
       case RADIO_AREA.CAPTACION:
         return counts.captaciones;
+
+      case RADIO_AREA.AFILIACION:
+        return counts.afiliaciones;
 
       default:
         return 0;
