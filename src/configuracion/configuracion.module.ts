@@ -8,6 +8,8 @@ import { CreditoModule } from './credito/credito.module';
 import { ControlCargaRadiografiasModule } from './control-carga-radiografias/control-carga-radiografias.module';
 import { MigracionModule } from './migracion/migracion.module';
 import { ModulosModule } from './modulos/modulos.module';
+import { CategoriasCaptacionModule } from './categorias-captacion/categorias-captacion.module';
+import { ProductosCaptacionModule } from './productos-captacion/productos-captacion.module';
 
 @Module({
   imports: [
@@ -17,7 +19,11 @@ import { ModulosModule } from './modulos/modulos.module';
     UsuariosModule, 
     ProductosModule, 
     CreditoModule, 
-    ControlCargaRadiografiasModule, MigracionModule, ModulosModule,
+    ControlCargaRadiografiasModule,
+    MigracionModule,
+    ModulosModule,
+    CategoriasCaptacionModule,
+    ProductosCaptacionModule,
   ]
 })
 export class ConfiguracionModule {}
