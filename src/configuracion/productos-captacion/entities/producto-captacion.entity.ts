@@ -16,6 +16,9 @@ export class ProductoCaptacion {
   @Field(() => Boolean)
   R27Activ: boolean;
 
+  @Field(() => Boolean)
+  R27EsInfantil: boolean;
+
   @Field(() => ID)
   R27Coop_id: string;
 

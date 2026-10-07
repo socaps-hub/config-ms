@@ -1,6 +1,12 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
 
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 @InputType()
 export class UpdateProductoCaptacionInput {
@@ -18,4 +24,11 @@ export class UpdateProductoCaptacionInput {
   @IsOptional()
   @IsUUID()
   R27Cat_id?: string;
+
+  @Field(() => Boolean, {
+    nullable: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  R27EsInfantil?: boolean;
 }

@@ -8,9 +8,13 @@ import { CreateProductoCaptacionInput } from './dto/inputs/create-producto-capta
 import { UpdateProductoCaptacionInput } from './dto/inputs/update-producto-captacion.input';
 import { CreateProductoCaptacionImportDto } from './dto/inputs/create-producto-captacion-import.dto';
 import { ProductoCaptacion } from './entities/producto-captacion.entity';
+import { SyncProductosCaptacionInfantilesInput } from './dto/inputs/sync-productos-captacion-infantiles.input';
 
 @Injectable()
-export class ProductosCaptacionService extends PrismaClient implements OnModuleInit {
+export class ProductosCaptacionService
+  extends PrismaClient
+  implements OnModuleInit
+{
   private readonly _logger = new Logger(ProductosCaptacionService.name);
 
   public async onModuleInit(): Promise<void> {
@@ -28,7 +32,10 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
   ): Promise<ProductoCaptacion> {
     const nombre = this._normalizeName(input.R27Nom);
 
-    await this._validateCategoria(input.R27Cat_id);
+    await this._validateCategoriaInfantil(
+      input.R27Cat_id,
+      input.R27EsInfantil ?? false,
+    );
 
     const productoExistente = await this.findByName(input.R27Coop_id, nombre);
 
@@ -53,6 +60,7 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
           R27Cat_id: input.R27Cat_id,
           R27Coop_id: input.R27Coop_id,
           R27Activ: true,
+          R27EsInfantil: input.R27EsInfantil ?? false,
         },
         include: {
           categoria: true,
@@ -165,7 +173,20 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
   ): Promise<ProductoCaptacion> {
     const producto = await this.findByID(id, coopId);
 
+    const categoriaFinal = input.R27Cat_id ?? producto.R27Cat_id;
+
+    const esInfantilFinal = input.R27EsInfantil ?? producto.R27EsInfantil;
+
+    await this._validateCategoriaInfantil(categoriaFinal, esInfantilFinal);
+
     const data: Prisma.R27ProductoCaptacionUpdateInput = {};
+
+    if (
+      input.R27EsInfantil !== undefined &&
+      input.R27EsInfantil !== producto.R27EsInfantil
+    ) {
+      data.R27EsInfantil = input.R27EsInfantil;
+    }
 
     if (input.R27Nom !== undefined) {
       const nombre = this._normalizeName(input.R27Nom);
@@ -188,7 +209,7 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
       input.R27Cat_id !== undefined &&
       input.R27Cat_id !== producto.R27Cat_id
     ) {
-      await this._validateCategoria(input.R27Cat_id);
+      await this._validateCategoriaInfantil(input.R27Cat_id, esInfantilFinal);
 
       data.categoria = {
         connect: {
@@ -503,6 +524,128 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
     }
   }
 
+  public async syncInfantiles(
+    input: SyncProductosCaptacionInfantilesInput,
+  ): Promise<BooleanResponse> {
+    const ids = [...new Set(input.productosInfantilesIds)];
+
+    /*
+     * Si existen productos seleccionados,
+     * validamos en una sola consulta:
+     *
+     * - que existan;
+     * - que estén activos;
+     * - que pertenezcan a la cooperativa;
+     * - que pertenezcan a A la vista.
+     */
+    if (ids.length) {
+      const productos = await this.r27ProductoCaptacion.findMany({
+        where: {
+          R27Id: {
+            in: ids,
+          },
+
+          R27Coop_id: input.coopId,
+
+          R27Activ: true,
+        },
+
+        select: {
+          R27Id: true,
+          R27Nom: true,
+
+          categoria: {
+            select: {
+              R26Nom: true,
+            },
+          },
+        },
+      });
+
+      if (productos.length !== ids.length) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message:
+            'Uno o más productos no existen, están desactivados o no pertenecen a la cooperativa',
+        });
+      }
+
+      const productosInvalidos = productos.filter(
+        (producto) =>
+          this._normalizeName(producto.categoria.R26Nom) !== 'a la vista',
+      );
+
+      if (productosInvalidos.length) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message:
+            'Sólo los productos de la categoría A la vista pueden configurarse como infantiles',
+        });
+      }
+    }
+
+    try {
+      await this.$transaction(async (tx) => {
+        /*
+         * 1. Quitamos la clasificación infantil
+         * de todos los productos activos de
+         * la cooperativa.
+         */
+        await tx.r27ProductoCaptacion.updateMany({
+          where: {
+            R27Coop_id: input.coopId,
+
+            R27Activ: true,
+
+            R27EsInfantil: true,
+          },
+
+          data: {
+            R27EsInfantil: false,
+          },
+        });
+
+        /*
+         * 2. Marcamos únicamente la selección
+         * recibida.
+         */
+        if (ids.length) {
+          await tx.r27ProductoCaptacion.updateMany({
+            where: {
+              R27Id: {
+                in: ids,
+              },
+
+              R27Coop_id: input.coopId,
+
+              R27Activ: true,
+            },
+
+            data: {
+              R27EsInfantil: true,
+            },
+          });
+        }
+      });
+
+      return {
+        success: true,
+        message: ids.length
+          ? `${ids.length} productos infantiles configurados correctamente.`
+          : 'La cooperativa quedó sin productos infantiles configurados.',
+      };
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+
+      this._handlePrismaError(
+        error,
+        'No fue posible actualizar la configuración de productos infantiles',
+      );
+    }
+  }
+
   // ============================================================
   // PRIVATE
   // ============================================================
@@ -511,22 +654,35 @@ export class ProductosCaptacionService extends PrismaClient implements OnModuleI
     return value.trim().toLowerCase();
   }
 
-  private async _validateCategoria(categoriaId: string): Promise<void> {
+  private async _validateCategoriaInfantil(
+    categoriaId: string,
+    esInfantil: boolean,
+  ): Promise<void> {
     const categoria = await this.r26CategoriaCaptacion.findFirst({
       where: {
         R26Id: categoriaId,
         R26Activ: true,
       },
-
       select: {
         R26Id: true,
+        R26Nom: true,
       },
     });
 
     if (!categoria) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
-        message: `La categoría de captación con id ${categoriaId} no existe o está desactivada`,
+        message:
+          `La categoría de captación con id ${categoriaId} ` +
+          'no existe o está desactivada',
+      });
+    }
+
+    if (esInfantil && this._normalizeName(categoria.R26Nom) !== 'a la vista') {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message:
+          'Los productos infantiles deben pertenecer a la categoría A la vista',
       });
     }
   }

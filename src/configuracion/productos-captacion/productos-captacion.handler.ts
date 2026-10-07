@@ -10,6 +10,7 @@ import { CreateProductoCaptacionInput } from './dto/inputs/create-producto-capta
 import { UpdateProductoCaptacionInput } from './dto/inputs/update-producto-captacion.input';
 import { CreateProductoCaptacionImportDto } from './dto/inputs/create-producto-captacion-import.dto';
 import { ProductosCaptacionService } from './productos-captacion.service';
+import { SyncProductosCaptacionInfantilesInput } from './dto/inputs/sync-productos-captacion-infantiles.input';
 
 @Controller()
 export class ProductosCaptacionHandler {
@@ -164,6 +165,25 @@ export class ProductosCaptacionHandler {
     },
   ) {
     return this._service.desactivate(data.id, data.coopId);
+  }
+
+  @UseInterceptors(ActivityLogRpcInterceptor)
+  @ActivityLog({
+    service: 'config-ms',
+    module: 'productos-captacion',
+    action: AuditActionEnum.UPDATE,
+    eventName: 'config.productosCaptacion.syncInfantiles',
+    entities: [],
+  })
+  @MessagePattern('config.productosCaptacion.syncInfantiles')
+  public handleSyncInfantiles(
+    @Payload()
+    data: {
+      input: SyncProductosCaptacionInfantilesInput;
+      user: Usuario;
+    },
+  ) {
+    return this._service.syncInfantiles(data.input);
   }
 
   // ============================================================
